@@ -42,14 +42,14 @@ var myScore;
 
 function startGame() {
     //Lager figuren og plasserer han i midten lavt nede
-    myGamePiece = new component(30, 30, "black", window.innerWidth/2-15, window.innerHeight-280);
+    myGamePiece = new component(30, 60, "player_s.gif", window.innerWidth/2-15, window.innerHeight-280, "image");
     //Start blokken som han starter oppå
     //Å Gjøre endre størrelse utifra skjermstørrelse
-    myObstacles.push(new component(100, 10, "green", window.innerWidth/2-50, window.innerHeight-50));
+    myObstacles.push(new component(window.innerWidth, 40, "start.gif", 0, window.innerHeight-40, "image"));
 
 
     //For å teste å gå oppover
-    myObstacles.push(new component(100, 10, "green", window.innerWidth/2-150, window.innerHeight-170));
+    myObstacles.push(new component(100, 20, "block.gif", window.innerWidth/2-150, window.innerHeight-170, "image"));
 
     //Setter gravitasjonen i spiller med hvor for han "Går ned"
     myGamePiece.gravity = 0.1;
@@ -87,6 +87,10 @@ var myGameArea = {
 
 function component(width, height, src, x, y, type) {
     this.type = type;
+    if(this.type == "image"){
+      this.image = new Image();
+      this.image.src = "img/"+src;
+    }
     this.score = 0;
     this.width = width;
     this.height = height;
@@ -103,6 +107,11 @@ function component(width, height, src, x, y, type) {
             ctx.font = this.width + " " + this.height;
             ctx.fillStyle = 'black';
             ctx.fillText(this.text, this.x, this.y);
+        } else if(type == "image"){
+          ctx.drawImage(this.image,
+          this.x,
+          this.y,
+          this.width, this.height);
         } else {
             ctx.fillStyle = src;
             ctx.fillRect(this.x, this.y, this.width, this.height);
@@ -193,7 +202,7 @@ function updateGameArea() {
         maxGap = 200;
         gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);*/
         //Lager blokkene
-        myObstacles.push(new component(width, 10, "green", x, y));
+        myObstacles.push(new component(width, 20, "block.gif", x, y, "image"));
     }
     for (i = 0; i < myObstacles.length; i += 1) {
         //Flytter objektet
