@@ -38,7 +38,7 @@ function startGame() {
     myObstacles.push(new component(100, 10, "green", window.innerWidth/2-150, window.innerHeight-170));
 
     //Setter gravitasjonen i spiller med hvor for han "Går ned"
-    myGamePiece.gravity = 0.05;
+    myGamePiece.gravity = 0.1;
     //Viser scoren
     myScore = new component("30px", "Consolas", "black", 280, 40, "text");
     //Starter spiller
@@ -138,10 +138,13 @@ function updateGameArea() {
     for (i = 0; i < myObstacles.length; i += 1) {
         //Ser om spilleren har krasjet i objektet
         if (myGamePiece.crashWith(myObstacles[i])) {
-          //Bestemmer hvor høyt den hopper
-          myGamePiece.speedY = -5;
-          //Gjør slik at den alltid hopper like høyt, ikke lavere hvis den har vært kortere tid i luften
-          myGamePiece.gravitySpeed = 0;
+          //Gjør slik at figuren ikke "flyr" opp, men må lande på platformen først. Finnes det en bedre måte?
+          if(myGamePiece.gravitySpeed >= 4.5){
+            //Bestemmer hvor høyt den hopper
+            myGamePiece.speedY = -7;
+            //Gjør slik at den alltid hopper like høyt, ikke lavere hvis den har vært kortere tid i luften
+            myGamePiece.gravitySpeed = 0;
+          }
         }
     }
     myGameArea.clear();
