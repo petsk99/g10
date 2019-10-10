@@ -19,6 +19,20 @@ html, body {margin: 0; height: 100%; overflow: hidden}
 <body onload="startGame()">
 <script>
 
+/*
+Ting å fikse:
+Score når han går opp
+Starte med tilfeldig antall blokker
+Ikke lage ny blokk hvert 1,5 sek, men når han går opp
+Lage algoritme slik at det alltid skal være mulig å lande på en blokk
+
+
+
+
+
+
+*/
+
 //Spilleren
 var myGamePiece;
 //Blokkene den lander på
@@ -31,7 +45,7 @@ function startGame() {
     myGamePiece = new component(30, 30, "black", window.innerWidth/2-15, window.innerHeight-280);
     //Start blokken som han starter oppå
     //Å Gjøre endre størrelse utifra skjermstørrelse
-    myObstacles.push(new component(100, 10, "green", window.innerWidth/2-50, window.innerHeight-20));
+    myObstacles.push(new component(100, 10, "green", window.innerWidth/2-50, window.innerHeight-50));
 
 
     //For å teste å gå oppover
@@ -82,6 +96,7 @@ function component(width, height, color, x, y, type) {
     this.y = y;
     this.gravity = 0;
     this.gravitySpeed = 0;
+    this.onBlock = 0;
     this.update = function() {
         ctx = myGameArea.context;
         if (this.type == "text") {
@@ -144,6 +159,21 @@ function updateGameArea() {
             myGamePiece.speedY = -7;
             //Gjør slik at den alltid hopper like høyt, ikke lavere hvis den har vært kortere tid i luften
             myGamePiece.gravitySpeed = 0;
+
+            //Ser om blokken den akkuratt landet på er nyere enn den forrige
+            //er den det må vi flytte alle blokkene ned
+            if(myGamePiece.onBlock < i){
+              //alert("ny blokk");
+              var heightGap = myObstacles[myGamePiece.onBlock].y - myObstacles[i].y;
+              //Flytter alle blokkene ned med høydeforskjellen mellom gamle og nye blokken
+              for(blokk of myObstacles){
+                blokk.y += heightGap;
+                //Skrur ned farten hans så han ikke flyr opp når alle andre beveger seg ned Finnes det en bedre måte?
+                myGamePiece.speedY += 0.5;
+              }
+
+              myGamePiece.onBlock = i;
+            }
           }
         }
     }
