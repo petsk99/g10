@@ -11,7 +11,7 @@ body {
 
 canvas {
     border:1px solid #d3d3d3;
-    background-color: #DD0802;
+    /*background-color: #DD0802;*/
 }
 /* Fjerner muligheten til å scolle på siden så canvasen dekker hele */
 html, body {margin: 0; height: 100%; overflow: hidden}
@@ -34,6 +34,7 @@ var myGamePiece;
 var myObstacles = [];
 //Scoren
 var myScore;
+
 
 function startGame() {
     //Lager figuren og plasserer han i midten lavt nede
@@ -210,7 +211,7 @@ function updateGameArea() {
               //alert("ny blokk");
               var heightGap = myObstacles[myGamePiece.onBlock].y - myObstacles[i].y;
 
-              myScore.score += heightGap * 10;
+              myScore.score += heightGap;
 
               //Lager nye blokker, lager mellom 1 og 4? nye blokker
               var newBlocks = Math.floor(Math.random()*3)+1;
@@ -236,10 +237,11 @@ function updateGameArea() {
 
               //Flytter alle blokkene ned med høydeforskjellen mellom gamle og nye blokken
               for(blokk of myObstacles){
-                blokk.y += heightGap;
+                platformAnimation(blokk, heightGap);
+                //blokk.y += heightGap;
                 //Skrur ned farten hans så han ikke flyr opp når alle andre beveger seg ned Finnes det en bedre måte?
               }
-              myGamePiece.y += heightGap - 30;
+              //myGamePiece.y += heightGap - 30;
 
               myGamePiece.onBlock = i;
             }
@@ -250,22 +252,6 @@ function updateGameArea() {
     }
     myGameArea.clear();
     myGameArea.frameNo += 1;
-    //Å gjøre kommer færre jo lenger du har kommet (Bruke score?)
-    //Å Gjøre må skje når de når en ny platform / når skjermen går oppover
-    //Hvor ofte det blir lagd en platform
-    /*if (myGameArea.frameNo == 1 || everyinterval(150)) {
-        //Å Gjøre skal være 0 også gå nedover når man hopper
-        y = 20;
-        x = Math.floor(Math.random()*myGameArea.canvas.width);
-        minWidth = 50;
-        maxWidth = 150;
-        width = Math.floor(Math.random()*(maxWidth-minWidth+1)+minWidth);
-        minGap = 50;
-        maxGap = 200;
-        gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);
-        //Lager blokkene
-        myObstacles.push(new component(width, 20, "img/block.gif", x, y, "image"));
-    }*/
     for (i = 0; i < myObstacles.length; i += 1) {
         //Flytter objektet
         //myObstacles[i].y += 1;
@@ -326,12 +312,6 @@ function calculateBlock(start){
 
 
 
-
-
-
-
-
-
   pos = [posX, posY];
   /*var pos = [0, 0];
   //alert("Making block");
@@ -381,6 +361,20 @@ function isInside(x1,y1,x2,y2,x3,y3,x,y){
 function area(x1,y1,x2,y2,x3,y3){
   return Math.abs((x1*(y2-y3) + x2*(y3-y1)+x3*(y1-y2))/2.0);
 }
+
+function platformAnimation(platform, heightGap){
+  var heightChange = 0;
+  var id = setInterval(frame, 10);
+  function frame(){
+    if(heightChange >= heightGap){
+      clearInterval(id);
+    } else {
+      platform.y += 2;
+      heightChange += 2;
+    }
+  }
+}
+
 
 //Brukes til debugging
 function printMousePos(event) {
