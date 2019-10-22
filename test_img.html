@@ -22,15 +22,9 @@ html, body {margin: 0; height: 100%; overflow: hidden}
 
 /*
 Ting å fikse:
-Starte med tilfeldig antall blokker
-Ikke lage ny blokk hvert 1,5 sek, men når han går opp
 Lage algoritme slik at det alltid skal være mulig å lande på en blokk
-Ikke kunne gå ut av banen
 Passe på at de nye blokkene blir lagd og finnes
 
-Kan lande på ny platform med hodet
-
-Ser dum ut når han har landet på en ny platform
 
 */
 
@@ -55,6 +49,7 @@ function startGame() {
     while(!pleased){
       for(var b = 0; b < startBlokker; b++){
         //Må lage fra bunnen av skjermen og oppover for at det ikke skal bli buggs med blokken den lander på og få skjermen opp
+        //Parameterne fra bPos er x, y
         var bPos = calculateBlock(true);
         //alert(bPos);
         myObstacles.push(new component(100, 20, "img/block.gif", bPos[0], bPos[1], "image"));
@@ -70,7 +65,7 @@ function startGame() {
 
 
     //Setter gravitasjonen i spiller med hvor for han "Går ned"
-    myGamePiece.gravity = 0.1;
+    myGamePiece.gravity = 0.5;
     //Viser scoren
     myScore = new component("30px", "Consolas", "", 280, 40, "text");
     //Starter spiller
@@ -119,7 +114,6 @@ function component(width, height, src, x, y, type) {
     this.x = x;
     this.y = y;
     this.gravity = 0;
-    this.gravitySpeed = 0;
     this.onBlock = 0;
     this.update = function() {
         ctx = myGameArea.context;
@@ -138,7 +132,7 @@ function component(width, height, src, x, y, type) {
         }
     }
     this.newPos = function() {
-        this.gravitySpeed += this.gravity;
+        this.speedY += this.gravity;
           //Får hvilke tast det er fra https://keycode.info/
         //Å gjøre: Få farten til å være relativ til størrelsen på skjermen
 
@@ -146,7 +140,7 @@ function component(width, height, src, x, y, type) {
         else if (myGameArea.key && myGameArea.key == 39) {this.speedX = 7; myGamePiece.image.src="img/player_r.gif";} /* Beveger seg til HØYRE */
         else {this.speedX = 0; myGamePiece.image.src="img/player_s.gif";} /* Hvis ingen av tastene blir trykt står den stille */
         this.x += this.speedX;
-        this.y += this.speedY + this.gravitySpeed;
+        this.y += this.speedY;
         this.hitBottom();
         this.hitRight();
         this.hitLeft();
@@ -178,11 +172,9 @@ function component(width, height, src, x, y, type) {
             this.y = rockbottom;
             this.speedY = 0;
             this.speedX = 0;
-            this.gravitySpeed = 0;
         }
     }
     this.crashWith = function(otherobj) {
-        //Dette er testing koden
 
         var pRigth = otherobj.x + (otherobj.width);
         var pLeft = otherobj.x;
@@ -192,36 +184,15 @@ function component(width, height, src, x, y, type) {
         var cRight = this.x + (this.width);
         var cLeft = this.x;
         var cBottom = this.y + (this.height);
-        var cTop = this.y;
-        //Har ikke med chacter sitt hode så cTop er ikke med
+        //Har ikke med chacter sitt hode så cTop er ikke med. Ettersom at vi ønsker at han kun kan hoppe med benene sine
         var crash = false;
-/*
-        if((cBottom < pTop) || (cTop > pBottom) || (cRight < pLeft) || (cLeft > cRight)){
-          crash = false;
-        }*/
-        if(((pLeft < cRight) && (pRigth > cLeft) && (pBottom > cTop) && (pTop < cBottom))){
+
+        if(((pLeft < cRight) && (pRigth > cLeft) && (pBottom > cBottom) && (pTop < cBottom))){
           crash = true;
         }
 
         return crash;
 
-
-        //otherobj er platformene
-
-        //Denne funker men ikke perfekt
-        /*var cleft = this.x;
-        var cright = this.x + (this.width);
-        var ctop = this.y;
-        var cbottom = this.y + (this.height);
-        var pleft = otherobj.x;
-        var pright = otherobj.x + (otherobj.width);
-        var ptop = otherobj.y;
-        var pbottom = otherobj.y + (otherobj.height);
-        var crash = true;
-        if ((cbottom < ptop) || (ctop > pbottom) || (cright < pleft) || (cleft > pright)) {
-            crash = false;
-        }
-        return crash;*/
     }
 }
 
@@ -232,14 +203,9 @@ function updateGameArea() {
         if (myGamePiece.crashWith(myObstacles[i])) {
           //Gjør slik at figuren ikke "flyr" opp, men må lande på platformen først. Finnes det en bedre måte?
 
-          if(myGamePiece.gravitySpeed >= 4.5){
-            //Bestemmer hvor høyt den hopper
-            myGamePiece.speedY = -7;
-            //Gjør slik at den alltid hopper like høyt, ikke lavere hvis den har vært kortere tid i luften
-            myGamePiece.gravitySpeed = 0;
+          //Ser at spilleren faller også blir det bedre flyt i spillet hvis det er 0.5
+          if(myGamePiece.speedY > 0.5){
 
-            //Ser om blokken den akkuratt landet på er nyere enn den forrige
-            //er den det må vi flytte alle blokkene ned
             if(myGamePiece.onBlock < i){
               //alert("ny blokk");
               var heightGap = myObstacles[myGamePiece.onBlock].y - myObstacles[i].y;
@@ -256,15 +222,29 @@ function updateGameArea() {
                 myObstacles.push(new component(100, 20, "img/block.gif", bPos[0], bPos[1], "image"));
               }
 
+              //For å passe på at skjermen alltid er full
+              var fullScreen = false;
+              while(!fullScreen){
+                if(myObstacles[myObstacles.length-1].y > -50){
+                  var bPos = calculateBlock(false);
+                  console.log("ikke fullskjerm");
+                  myObstacles.push(new component(100, 20, "img/block.gif", bPos[0], bPos[1], "image"));
+                } else {
+                  fullScreen = true;
+                }
+              }
+
               //Flytter alle blokkene ned med høydeforskjellen mellom gamle og nye blokken
               for(blokk of myObstacles){
                 blokk.y += heightGap;
                 //Skrur ned farten hans så han ikke flyr opp når alle andre beveger seg ned Finnes det en bedre måte?
-                myGamePiece.speedY += 0.5;
               }
+              myGamePiece.y += heightGap - 30;
 
               myGamePiece.onBlock = i;
             }
+            myGamePiece.speedY = -13.2;
+
           }
         }
     }
@@ -302,9 +282,58 @@ function everyinterval(n) {
     return false;
 }
 
-//Legge til parameter med hvor mange som skal bli lagd?
 function calculateBlock(start){
-  var pos = [0, 0];
+  var pos = [0,0];
+
+  var highestBlock = myObstacles[myObstacles.length - 1];
+
+  var validPos = false;
+  //For å se om det er mulig å lande på den og at den er på banen
+  do{
+
+    //Tilfeldig enn så lenge
+    var posX = Math.floor(Math.random() * window.innerWidth + 50);
+    //alert(window.innerWidth);
+    var posY = highestBlock.y - Math.floor(Math.random() * 90 + 5);
+    //Spilleren hopper 165 px oppover, regne ut det?
+    //Hopper 375px til siden
+    /*console.log("S.x: " + myGamePiece.x + " S.y: " + (window.innerHeight-40) + " S.x + 375: " + (myGamePiece.x + 375) + " S.y: " + (window.innerHeight-40) +
+    " S.x: " + myGamePiece.x + " S.y - 165: " + (window.innerHeight-40-165));
+    console.log(posX + " " + posY);*/
+    /*
+    if(isInside(myGamePiece.x,(window.innerHeight-40),(myGamePiece.x+375),(window.innerHeight-40),myGamePiece.x,(window.innerHeight-40-165),posX,posY) ||
+      isInside(myGamePiece.x,(window.innerHeight-40),(myGamePiece.x-375),(window.innerHeight-40),myGamePiece.x,(window.innerHeight-40-165),posX,posY)){
+          console.log("true");
+          validPos = true;
+    } else {
+      posX = Math.floor(Math.random() * window.innerWidth + 50);
+      posY = highestBlock.y - Math.floor(Math.random() * 90 + 5);
+    }*/
+
+    //Fungerer helt ok
+    if(isInside(highestBlock.x,(highestBlock.y),(highestBlock.x+375),(highestBlock.y),highestBlock.x,(highestBlock.y-165),posX,posY) ||
+      isInside(highestBlock.x,(highestBlock.y),(highestBlock.x-375),(highestBlock.y),highestBlock.x,(highestBlock.y-165),posX,posY)){
+          validPos = true;
+    } else {
+        posX = Math.floor(Math.random() * window.innerWidth + 50);
+        posY = highestBlock.y - Math.floor(Math.random() * 90 + 5);
+
+    }
+  }while(!validPos);
+
+
+
+
+
+
+
+
+
+
+
+
+  pos = [posX, posY];
+  /*var pos = [0, 0];
   //alert("Making block");
   //Må finne forrige block og gi ny y verdi som er lavere enn forrige og bruke pytagoras for å se om det er mulig
   var lastBlock = myObstacles[myObstacles.length - 1];
@@ -335,7 +364,22 @@ function calculateBlock(start){
   }
   //alert(blockYPos);
   pos = [blockXPos, blockYPos];
+  return pos;*/
   return pos;
+}
+
+// vil respektivt være spiller.x, spiller.y, spiller.x, spiller.y + 165, spiller.x + 365, spiller.y, punkt.x, punkt.y
+function isInside(x1,y1,x2,y2,x3,y3,x,y){
+  var A = area(x1,y1,x2,y2,x3,y3);
+  var A1 = area(x,y,x2,y2,x3,y3);
+  var A2 = area(x1,y1,x,y,x3,y3);
+  var A3 = area(x1,y1,x2,y2,x,y);
+  //console.log("A: " + A + " A1: " + A1 + " A2: " + A2 + " A3: " + A3);
+  return(A == A1 + A2 + A3);
+}
+//https://www.geeksforgeeks.org/check-whether-a-given-point-lies-inside-a-triangle-or-not/
+function area(x1,y1,x2,y2,x3,y3){
+  return Math.abs((x1*(y2-y3) + x2*(y3-y1)+x3*(y1-y2))/2.0);
 }
 
 //Brukes til debugging

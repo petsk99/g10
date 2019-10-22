@@ -22,15 +22,9 @@ html, body {margin: 0; height: 100%; overflow: hidden}
 
 /*
 Ting å fikse:
-Starte med tilfeldig antall blokker
-Ikke lage ny blokk hvert 1,5 sek, men når han går opp
 Lage algoritme slik at det alltid skal være mulig å lande på en blokk
-Ikke kunne gå ut av banen
 Passe på at de nye blokkene blir lagd og finnes
 
-Kan lande på ny platform med hodet
-
-Ser dum ut når han har landet på en ny platform
 
 */
 
@@ -55,6 +49,7 @@ function startGame() {
     while(!pleased){
       for(var b = 0; b < startBlokker; b++){
         //Må lage fra bunnen av skjermen og oppover for at det ikke skal bli buggs med blokken den lander på og få skjermen opp
+        //Parameterne fra bPos er x, y
         var bPos = calculateBlock(true);
         //alert(bPos);
         myObstacles.push(new component(100, 20, "img/block.gif", bPos[0], bPos[1], "image"));
@@ -208,8 +203,8 @@ function updateGameArea() {
         if (myGamePiece.crashWith(myObstacles[i])) {
           //Gjør slik at figuren ikke "flyr" opp, men må lande på platformen først. Finnes det en bedre måte?
 
-
-          if(myGamePiece.speedY > 0){
+          //Ser at spilleren faller også blir det bedre flyt i spillet hvis det er 0.5
+          if(myGamePiece.speedY > 0.5){
 
             if(myGamePiece.onBlock < i){
               //alert("ny blokk");
@@ -225,6 +220,18 @@ function updateGameArea() {
                 var bPos = calculateBlock(false);
                 //alert(bPos);
                 myObstacles.push(new component(100, 20, "img/block.gif", bPos[0], bPos[1], "image"));
+              }
+
+              //For å passe på at skjermen alltid er full
+              var fullScreen = false;
+              while(!fullScreen){
+                if(myObstacles[myObstacles.length-1].y > -50){
+                  var bPos = calculateBlock(false);
+                  console.log("ikke fullskjerm");
+                  myObstacles.push(new component(100, 20, "img/block.gif", bPos[0], bPos[1], "image"));
+                } else {
+                  fullScreen = true;
+                }
               }
 
               //Flytter alle blokkene ned med høydeforskjellen mellom gamle og nye blokken
@@ -275,9 +282,58 @@ function everyinterval(n) {
     return false;
 }
 
-//Legge til parameter med hvor mange som skal bli lagd?
 function calculateBlock(start){
-  var pos = [0, 0];
+  var pos = [0,0];
+
+  var highestBlock = myObstacles[myObstacles.length - 1];
+
+  var validPos = false;
+  //For å se om det er mulig å lande på den og at den er på banen
+  do{
+
+    //Tilfeldig enn så lenge
+    var posX = Math.floor(Math.random() * window.innerWidth + 50);
+    //alert(window.innerWidth);
+    var posY = highestBlock.y - Math.floor(Math.random() * 90 + 5);
+    //Spilleren hopper 165 px oppover, regne ut det?
+    //Hopper 375px til siden
+    /*console.log("S.x: " + myGamePiece.x + " S.y: " + (window.innerHeight-40) + " S.x + 375: " + (myGamePiece.x + 375) + " S.y: " + (window.innerHeight-40) +
+    " S.x: " + myGamePiece.x + " S.y - 165: " + (window.innerHeight-40-165));
+    console.log(posX + " " + posY);*/
+    /*
+    if(isInside(myGamePiece.x,(window.innerHeight-40),(myGamePiece.x+375),(window.innerHeight-40),myGamePiece.x,(window.innerHeight-40-165),posX,posY) ||
+      isInside(myGamePiece.x,(window.innerHeight-40),(myGamePiece.x-375),(window.innerHeight-40),myGamePiece.x,(window.innerHeight-40-165),posX,posY)){
+          console.log("true");
+          validPos = true;
+    } else {
+      posX = Math.floor(Math.random() * window.innerWidth + 50);
+      posY = highestBlock.y - Math.floor(Math.random() * 90 + 5);
+    }*/
+
+    //Fungerer helt ok
+    if(isInside(highestBlock.x,(highestBlock.y),(highestBlock.x+375),(highestBlock.y),highestBlock.x,(highestBlock.y-165),posX,posY) ||
+      isInside(highestBlock.x,(highestBlock.y),(highestBlock.x-375),(highestBlock.y),highestBlock.x,(highestBlock.y-165),posX,posY)){
+          validPos = true;
+    } else {
+        posX = Math.floor(Math.random() * window.innerWidth + 50);
+        posY = highestBlock.y - Math.floor(Math.random() * 90 + 5);
+
+    }
+  }while(!validPos);
+
+
+
+
+
+
+
+
+
+
+
+
+  pos = [posX, posY];
+  /*var pos = [0, 0];
   //alert("Making block");
   //Må finne forrige block og gi ny y verdi som er lavere enn forrige og bruke pytagoras for å se om det er mulig
   var lastBlock = myObstacles[myObstacles.length - 1];
@@ -308,7 +364,22 @@ function calculateBlock(start){
   }
   //alert(blockYPos);
   pos = [blockXPos, blockYPos];
+  return pos;*/
   return pos;
+}
+
+// vil respektivt være spiller.x, spiller.y, spiller.x, spiller.y + 165, spiller.x + 365, spiller.y, punkt.x, punkt.y
+function isInside(x1,y1,x2,y2,x3,y3,x,y){
+  var A = area(x1,y1,x2,y2,x3,y3);
+  var A1 = area(x,y,x2,y2,x3,y3);
+  var A2 = area(x1,y1,x,y,x3,y3);
+  var A3 = area(x1,y1,x2,y2,x,y);
+  //console.log("A: " + A + " A1: " + A1 + " A2: " + A2 + " A3: " + A3);
+  return(A == A1 + A2 + A3);
+}
+//https://www.geeksforgeeks.org/check-whether-a-given-point-lies-inside-a-triangle-or-not/
+function area(x1,y1,x2,y2,x3,y3){
+  return Math.abs((x1*(y2-y3) + x2*(y3-y1)+x3*(y1-y2))/2.0);
 }
 
 //Brukes til debugging
