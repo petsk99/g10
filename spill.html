@@ -2,6 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Jump save humanity</title>
 <style>
 
 body {
@@ -10,7 +11,7 @@ body {
 
 canvas {
     border:1px solid #d3d3d3;
-    background-color: #f1f1f1;
+    background-color: #DD0802;
 }
 /* Fjerner muligheten til å scolle på siden så canvasen dekker hele */
 html, body {margin: 0; height: 100%; overflow: hidden}
@@ -21,15 +22,15 @@ html, body {margin: 0; height: 100%; overflow: hidden}
 
 /*
 Ting å fikse:
-Score når han går opp
 Starte med tilfeldig antall blokker
 Ikke lage ny blokk hvert 1,5 sek, men når han går opp
 Lage algoritme slik at det alltid skal være mulig å lande på en blokk
+Ikke kunne gå ut av banen
+Passe på at de nye blokkene blir lagd og finnes
 
+Kan lande på ny platform med hodet
 
-
-
-
+Ser dum ut når han har landet på en ny platform
 
 */
 
@@ -42,14 +43,31 @@ var myScore;
 
 function startGame() {
     //Lager figuren og plasserer han i midten lavt nede
-    myGamePiece = new component(30, 60, "player_s.gif", window.innerWidth/2-15, window.innerHeight-280, "image");
+    myGamePiece = new component(30, 60, "img/player_s.gif", window.innerWidth/2-15, window.innerHeight-280, "image");
     //Start blokken som han starter oppå
     //Å Gjøre endre størrelse utifra skjermstørrelse
-    myObstacles.push(new component(window.innerWidth, 40, "start.gif", 0, window.innerHeight-40, "image"));
+    myObstacles.push(new component(window.innerWidth, 40, "img/start.gif", 0, window.innerHeight-40, "image"));
 
+    //Starter med nok blokker
+    var startBlokker = Math.floor(Math.random()*10+3);
+    var oldH = window.innerHeight-20;
+    var pleased = false;
+    while(!pleased){
+      for(var b = 0; b < startBlokker; b++){
+        //Må lage fra bunnen av skjermen og oppover for at det ikke skal bli buggs med blokken den lander på og få skjermen opp
+        var bPos = calculateBlock(true);
+        //alert(bPos);
+        myObstacles.push(new component(100, 20, "img/block.gif", bPos[0], bPos[1], "image"));
+      }
+      //Denne passer på at hele skjermen blir fylt
+      if(myObstacles[myObstacles.length-1].y > 150){
+        pleased = false;
+        startBlokker = 1;
+      } else {
+        pleased = true;
+      }
+    }
 
-    //For å teste å gå oppover
-    myObstacles.push(new component(100, 20, "block.gif", window.innerWidth/2-150, window.innerHeight-170, "image"));
 
     //Setter gravitasjonen i spiller med hvor for han "Går ned"
     myGamePiece.gravity = 0.1;
@@ -70,6 +88,7 @@ var myGameArea = {
         this.context = this.canvas.getContext("2d");
         document.body.insertBefore(this.canvas, document.body.childNodes[0]);
         this.frameNo = 0;
+        this.score = 0;
         this.interval = setInterval(updateGameArea, 20);
         //Ser hvilke knapper som blir tastet
         window.addEventListener('keydown', function (e) {
@@ -81,6 +100,7 @@ var myGameArea = {
         },
 
     clear : function() {
+        //Fjerner alle tingene på skjermen, også blir de tegnet på nytt
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 }
@@ -89,7 +109,7 @@ function component(width, height, src, x, y, type) {
     this.type = type;
     if(this.type == "image"){
       this.image = new Image();
-      this.image.src = "img/"+src;
+      this.image.src = src;
     }
     this.score = 0;
     this.width = width;
@@ -122,18 +142,39 @@ function component(width, height, src, x, y, type) {
           //Får hvilke tast det er fra https://keycode.info/
         //Å gjøre: Få farten til å være relativ til størrelsen på skjermen
 
-        if (myGameArea.key && myGameArea.key == 37) {this.speedX = -7; } /* Bevger seg til VENSTRE */
-        else if (myGameArea.key && myGameArea.key == 39) {this.speedX = 7; } /* Beveger seg til HØYRE */
-        else {this.speedX = 0;} /* Hvis ingen av tastene blir trykt står den stille */
+        if (myGameArea.key && myGameArea.key == 37) {this.speedX = -7; myGamePiece.image.src="img/player_l.gif";} /* Bevger seg til VENSTRE */
+        else if (myGameArea.key && myGameArea.key == 39) {this.speedX = 7; myGamePiece.image.src="img/player_r.gif";} /* Beveger seg til HØYRE */
+        else {this.speedX = 0; myGamePiece.image.src="img/player_s.gif";} /* Hvis ingen av tastene blir trykt står den stille */
         this.x += this.speedX;
         this.y += this.speedY + this.gravitySpeed;
         this.hitBottom();
+        this.hitRight();
+        this.hitLeft();
+    }
+    //Når den treffer høyre side
+    this.hitRight = function(){
+      var rightSide = myGameArea.canvas.width - this.width;
+      if(this.x > rightSide){
+        //alert("Right");
+        this.speedX = 0;
+        this.x = rightSide;
+      }
+    }
+    //Når den treffer venstre side
+    this.hitLeft = function(){
+      var leftSide = 0;
+      if(this.x < leftSide){
+        this.speedX = 0;
+        this.x = leftSide;
+      }
     }
     //Når den treffer bakken
     this.hitBottom = function() {
         var rockbottom = myGameArea.canvas.height - this.height;
         if (this.y > rockbottom) {
             //De traff bunnen så de har tapt
+
+            //alert("dead");
             this.y = rockbottom;
             this.speedY = 0;
             this.speedX = 0;
@@ -141,19 +182,46 @@ function component(width, height, src, x, y, type) {
         }
     }
     this.crashWith = function(otherobj) {
-        var myleft = this.x;
-        var myright = this.x + (this.width);
-        var mytop = this.y;
-        var mybottom = this.y + (this.height);
-        var otherleft = otherobj.x;
-        var otherright = otherobj.x + (otherobj.width);
-        var othertop = otherobj.y;
-        var otherbottom = otherobj.y + (otherobj.height);
+        //Dette er testing koden
+
+        var pRigth = otherobj.x + (otherobj.width);
+        var pLeft = otherobj.x;
+        var pTop = otherobj.y;
+        var pBottom = otherobj.y + (otherobj.height);
+        //this er spilleren
+        var cRight = this.x + (this.width);
+        var cLeft = this.x;
+        var cBottom = this.y + (this.height);
+        var cTop = this.y;
+        //Har ikke med chacter sitt hode så cTop er ikke med
+        var crash = false;
+/*
+        if((cBottom < pTop) || (cTop > pBottom) || (cRight < pLeft) || (cLeft > cRight)){
+          crash = false;
+        }*/
+        if(((pLeft < cRight) && (pRigth > cLeft) && (pBottom > cTop) && (pTop < cBottom))){
+          crash = true;
+        }
+
+        return crash;
+
+
+        //otherobj er platformene
+
+        //Denne funker men ikke perfekt
+        /*var cleft = this.x;
+        var cright = this.x + (this.width);
+        var ctop = this.y;
+        var cbottom = this.y + (this.height);
+        var pleft = otherobj.x;
+        var pright = otherobj.x + (otherobj.width);
+        var ptop = otherobj.y;
+        var pbottom = otherobj.y + (otherobj.height);
         var crash = true;
-        if ((mybottom < othertop) || (mytop > otherbottom) || (myright < otherleft) || (myleft > otherright)) {
+        if ((cbottom < ptop) || (ctop > pbottom) || (cright < pleft) || (cleft > pright)) {
             crash = false;
         }
-        return crash;
+        return crash;*/
     }
 }
 
@@ -163,6 +231,7 @@ function updateGameArea() {
         //Ser om spilleren har krasjet i objektet
         if (myGamePiece.crashWith(myObstacles[i])) {
           //Gjør slik at figuren ikke "flyr" opp, men må lande på platformen først. Finnes det en bedre måte?
+
           if(myGamePiece.gravitySpeed >= 4.5){
             //Bestemmer hvor høyt den hopper
             myGamePiece.speedY = -7;
@@ -174,6 +243,19 @@ function updateGameArea() {
             if(myGamePiece.onBlock < i){
               //alert("ny blokk");
               var heightGap = myObstacles[myGamePiece.onBlock].y - myObstacles[i].y;
+
+              myScore.score += heightGap * 10;
+
+              //Lager nye blokker, lager mellom 1 og 4? nye blokker
+              var newBlocks = Math.floor(Math.random()*3)+1;
+              //Kan endre størrelsen på blokkene
+              for(var b = 0; b < newBlocks; b++){
+                //Må lage fra bunnen av skjermen og oppover for at det ikke skal bli buggs med blokken den lander på og få skjermen opp
+                var bPos = calculateBlock(false);
+                //alert(bPos);
+                myObstacles.push(new component(100, 20, "img/block.gif", bPos[0], bPos[1], "image"));
+              }
+
               //Flytter alle blokkene ned med høydeforskjellen mellom gamle og nye blokken
               for(blokk of myObstacles){
                 blokk.y += heightGap;
@@ -191,25 +273,25 @@ function updateGameArea() {
     //Å gjøre kommer færre jo lenger du har kommet (Bruke score?)
     //Å Gjøre må skje når de når en ny platform / når skjermen går oppover
     //Hvor ofte det blir lagd en platform
-    if (myGameArea.frameNo == 1 || everyinterval(150)) {
+    /*if (myGameArea.frameNo == 1 || everyinterval(150)) {
         //Å Gjøre skal være 0 også gå nedover når man hopper
         y = 20;
         x = Math.floor(Math.random()*myGameArea.canvas.width);
         minWidth = 50;
         maxWidth = 150;
         width = Math.floor(Math.random()*(maxWidth-minWidth+1)+minWidth);
-        /*minGap = 50;
+        minGap = 50;
         maxGap = 200;
-        gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);*/
+        gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);
         //Lager blokkene
-        myObstacles.push(new component(width, 20, "block.gif", x, y, "image"));
-    }
+        myObstacles.push(new component(width, 20, "img/block.gif", x, y, "image"));
+    }*/
     for (i = 0; i < myObstacles.length; i += 1) {
         //Flytter objektet
         //myObstacles[i].y += 1;
         myObstacles[i].update();
     }
-    myScore.text="SCORE: " + myGameArea.frameNo;
+    myScore.text="SCORE: " + myScore.score;
     myScore.update();
     myGamePiece.newPos();
     myGamePiece.update();
@@ -219,6 +301,50 @@ function everyinterval(n) {
     if ((myGameArea.frameNo / n) % 1 == 0) {return true;}
     return false;
 }
+
+//Legge til parameter med hvor mange som skal bli lagd?
+function calculateBlock(start){
+  var pos = [0, 0];
+  //alert("Making block");
+  //Må finne forrige block og gi ny y verdi som er lavere enn forrige og bruke pytagoras for å se om det er mulig
+  var lastBlock = myObstacles[myObstacles.length - 1];
+
+    //Hopper vanligvis 235 pixler opp også kan han hoppe 300 px sidelengs
+    //Å Gjøre Bedre måte å finne ut dette på
+    //Brukes pytagoras a^2 = b^2 + c^2 for å ikke ta den nye blokken for langt til siden
+  var maxToSide = Math.sqrt(300*300-235*235);
+  var xToSide = Math.floor(Math.random()*maxToSide) + 50;
+  var plussOrMinus = Math.floor(Math.random()*2);
+  if(plussOrMinus == 1){
+    xToSide = -xToSide;
+  }
+  var blockXPos = lastBlock.x + xToSide;
+  //Første blokken har x = 0 så må rette det opp sånn
+  if(myObstacles.length == 1){
+    blockXPos = window.innerWidth/2 + xToSide;
+  }
+//Å gjøre ikke gå for langt ut på sidene utenfor bildet
+
+  if(start){
+    // -10 Gjør slik den nye blokken ikke blir lagd oppå den gamle
+    var blockYPos = lastBlock.y - 10 - Math.floor(Math.random() * 150);
+  }
+  //Å Gjøre bedre måte å gjøre det på
+  else {
+    var blockYPos = lastBlock.y - 10 - Math.floor(Math.random() * 100);
+  }
+  //alert(blockYPos);
+  pos = [blockXPos, blockYPos];
+  return pos;
+}
+
+//Brukes til debugging
+function printMousePos(event) {
+  alert("clientX: " + event.clientX +
+    " - clientY: " + event.clientY);
+}
+
+document.addEventListener("click", printMousePos);
 
 </script>
 <br>
