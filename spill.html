@@ -70,7 +70,7 @@ function startGame() {
 
 
     //Setter gravitasjonen i spiller med hvor for han "Går ned"
-    myGamePiece.gravity = 0.1;
+    myGamePiece.gravity = 0.5;
     //Viser scoren
     myScore = new component("30px", "Consolas", "", 280, 40, "text");
     //Starter spiller
@@ -119,7 +119,6 @@ function component(width, height, src, x, y, type) {
     this.x = x;
     this.y = y;
     this.gravity = 0;
-    this.gravitySpeed = 0;
     this.onBlock = 0;
     this.update = function() {
         ctx = myGameArea.context;
@@ -138,7 +137,7 @@ function component(width, height, src, x, y, type) {
         }
     }
     this.newPos = function() {
-        this.gravitySpeed += this.gravity;
+        this.speedY += this.gravity;
           //Får hvilke tast det er fra https://keycode.info/
         //Å gjøre: Få farten til å være relativ til størrelsen på skjermen
 
@@ -146,7 +145,7 @@ function component(width, height, src, x, y, type) {
         else if (myGameArea.key && myGameArea.key == 39) {this.speedX = 7; myGamePiece.image.src="img/player_r.gif";} /* Beveger seg til HØYRE */
         else {this.speedX = 0; myGamePiece.image.src="img/player_s.gif";} /* Hvis ingen av tastene blir trykt står den stille */
         this.x += this.speedX;
-        this.y += this.speedY + this.gravitySpeed;
+        this.y += this.speedY;
         this.hitBottom();
         this.hitRight();
         this.hitLeft();
@@ -178,11 +177,9 @@ function component(width, height, src, x, y, type) {
             this.y = rockbottom;
             this.speedY = 0;
             this.speedX = 0;
-            this.gravitySpeed = 0;
         }
     }
     this.crashWith = function(otherobj) {
-        //Dette er testing koden
 
         var pRigth = otherobj.x + (otherobj.width);
         var pLeft = otherobj.x;
@@ -192,36 +189,15 @@ function component(width, height, src, x, y, type) {
         var cRight = this.x + (this.width);
         var cLeft = this.x;
         var cBottom = this.y + (this.height);
-        var cTop = this.y;
-        //Har ikke med chacter sitt hode så cTop er ikke med
+        //Har ikke med chacter sitt hode så cTop er ikke med. Ettersom at vi ønsker at han kun kan hoppe med benene sine
         var crash = false;
-/*
-        if((cBottom < pTop) || (cTop > pBottom) || (cRight < pLeft) || (cLeft > cRight)){
-          crash = false;
-        }*/
-        if(((pLeft < cRight) && (pRigth > cLeft) && (pBottom > cTop) && (pTop < cBottom))){
+
+        if(((pLeft < cRight) && (pRigth > cLeft) && (pBottom > cBottom) && (pTop < cBottom))){
           crash = true;
         }
 
         return crash;
 
-
-        //otherobj er platformene
-
-        //Denne funker men ikke perfekt
-        /*var cleft = this.x;
-        var cright = this.x + (this.width);
-        var ctop = this.y;
-        var cbottom = this.y + (this.height);
-        var pleft = otherobj.x;
-        var pright = otherobj.x + (otherobj.width);
-        var ptop = otherobj.y;
-        var pbottom = otherobj.y + (otherobj.height);
-        var crash = true;
-        if ((cbottom < ptop) || (ctop > pbottom) || (cright < pleft) || (cleft > pright)) {
-            crash = false;
-        }
-        return crash;*/
     }
 }
 
@@ -232,14 +208,9 @@ function updateGameArea() {
         if (myGamePiece.crashWith(myObstacles[i])) {
           //Gjør slik at figuren ikke "flyr" opp, men må lande på platformen først. Finnes det en bedre måte?
 
-          if(myGamePiece.gravitySpeed >= 4.5){
-            //Bestemmer hvor høyt den hopper
-            myGamePiece.speedY = -7;
-            //Gjør slik at den alltid hopper like høyt, ikke lavere hvis den har vært kortere tid i luften
-            myGamePiece.gravitySpeed = 0;
 
-            //Ser om blokken den akkuratt landet på er nyere enn den forrige
-            //er den det må vi flytte alle blokkene ned
+          if(myGamePiece.speedY > 0){
+
             if(myGamePiece.onBlock < i){
               //alert("ny blokk");
               var heightGap = myObstacles[myGamePiece.onBlock].y - myObstacles[i].y;
@@ -260,11 +231,13 @@ function updateGameArea() {
               for(blokk of myObstacles){
                 blokk.y += heightGap;
                 //Skrur ned farten hans så han ikke flyr opp når alle andre beveger seg ned Finnes det en bedre måte?
-                myGamePiece.speedY += 0.5;
               }
+              myGamePiece.y += heightGap - 30;
 
               myGamePiece.onBlock = i;
             }
+            myGamePiece.speedY = -13.2;
+
           }
         }
     }
