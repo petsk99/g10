@@ -2,7 +2,9 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8"/>
 <title>Jump save humanity</title>
+<link rel="shortcut icon" type="image/x-icon" href="img/player_s.gif" />
 <style>
 
 body {
@@ -27,7 +29,14 @@ var myObstacles = [];
 //Scoren
 var myScore;
 
-var deadFacts = ["Fact1", "Fact2", "Fact3"];
+var jumpSound;
+
+var deadFacts = [
+  "Gjennomsnittlig dyrelivbestand har sunket med 60 prosent på drøyt 40 år",
+  "Det er mer karbondioksid i atmosfæren vår nå enn noen gang i menneskets historie",
+  "To tredjedeler av ekstremværhendelser de siste 20 årene har vært påvirket av mennesker",
+  "120 000 kvadratkilometer tropisk skog gikk tapt i 2018"
+];
 
 var restart = false;
 
@@ -37,12 +46,15 @@ var touch = [false, false];
 function startGame() {
     //Lager figuren og plasserer han i midten lavt nede
     myGamePiece = new component(30, 60, "img/player_s.gif", window.innerWidth/2-15, window.innerHeight-280, "image");
+
+    jumpSound = new sound("sounds/jump.wav", 0.4);
+
     //Start blokken som han starter oppå
     //Å Gjøre endre størrelse utifra skjermstørrelse
     myObstacles.push(new component(window.innerWidth, 40, "img/start.gif", 0, window.innerHeight-40, "image"));
 
     //Starter med nok blokker
-    var startBlokker = Math.floor(Math.random()*10+3);
+    var startBlokker = Math.floor(Math.random()*4+3);
     var oldH = window.innerHeight-20;
     var pleased = false;
     while(!pleased){
@@ -67,7 +79,7 @@ function startGame() {
     //Setter gravitasjonen i spiller med hvor for han "Går ned"
     myGamePiece.gravity = 0.5;
     //Viser scoren
-    myScore = new component("30px", "Consolas", "", 280, 40, "text");
+    myScore = new component("30px", "Consolas", "", 20, 40, "text");
     //Starter spiller, hvis vi kjører denne hver gang blir spillet raskere og raskere vi ønsker en konstant fart
     if(!restart)
       myGameArea.start();
@@ -122,6 +134,7 @@ function component(width, height, src, x, y, type) {
     this.speedY = 0;
     this.x = x;
     this.y = y;
+    this.heightChange = 0;
     this.gravity = 0;
     this.onBlock = 0;
     this.update = function() {
@@ -196,7 +209,7 @@ function component(width, height, src, x, y, type) {
                 alert("Din score ble: " + myScore.score+"\nHighscoren er på: "+newHigh[1]+"\n"+deadFacts[Math.floor(Math.random()*deadFacts.length)]);
               }
             } else {*/
-              alert("Din score ble: " + myScore.score+"\n"+deadFacts[Math.floor(Math.random()*deadFacts.length)]);
+              alert("Din score ble: " + myScore.score+"\n Viste du at: "+deadFacts[Math.floor(Math.random()*deadFacts.length)]);
               /*document.cookie = "highscore="+myScore.score;
             }*/
 
@@ -248,7 +261,7 @@ function updateGameArea() {
               myScore.score += heightGap;
 
               //Lager nye blokker, lager mellom 1 og 4? nye blokker
-              var newBlocks = Math.floor(Math.random()*3)+1;
+              var newBlocks = 1;
               //Kan endre størrelsen på blokkene
               for(var b = 0; b < newBlocks; b++){
                 //Må lage fra bunnen av skjermen og oppover for at det ikke skal bli buggs med blokken den lander på og få skjermen opp
@@ -279,6 +292,7 @@ function updateGameArea() {
 
               myGamePiece.onBlock = i;
             }
+            jumpSound.play();
             myGamePiece.speedY = -13.2;
 
           }
@@ -312,9 +326,12 @@ function calculateBlock(start){
   do{
 
     //Tilfeldig enn så lenge
-    var posX = Math.floor(Math.random() * window.innerWidth + 50);
+    var posX = Math.floor(Math.random() * window.innerWidth);
+
+
+
     //alert(window.innerWidth);
-    var posY = highestBlock.y - Math.floor(Math.random() * 90 + 5);
+    var posY = highestBlock.y - Math.floor(Math.random() * 90 + 30);
     //Spilleren hopper 165 px oppover, regne ut det?
     //Hopper 375px til siden
     /*console.log("S.x: " + myGamePiece.x + " S.y: " + (window.innerHeight-40) + " S.x + 375: " + (myGamePiece.x + 375) + " S.y: " + (window.innerHeight-40) +
@@ -331,12 +348,15 @@ function calculateBlock(start){
     }*/
 
     //Fungerer helt ok
-    if(isInside(highestBlock.x,(highestBlock.y),(highestBlock.x+375),(highestBlock.y),highestBlock.x,(highestBlock.y-165),posX,posY) ||
-      isInside(highestBlock.x,(highestBlock.y),(highestBlock.x-375),(highestBlock.y),highestBlock.x,(highestBlock.y-165),posX,posY)){
+    if((isInside(highestBlock.x,(highestBlock.y),(highestBlock.x+375),(highestBlock.y),highestBlock.x,(highestBlock.y-165),posX,posY) ||
+      isInside(highestBlock.x,(highestBlock.y),(highestBlock.x-375),(highestBlock.y),highestBlock.x,(highestBlock.y-165),posX,posY)) &&
+      posY + 165 > highestBlock.y){
           validPos = true;
     } else {
-        posX = Math.floor(Math.random() * window.innerWidth + 50);
-        posY = highestBlock.y - Math.floor(Math.random() * 90 + 5);
+      do{
+        var posX = Math.floor(Math.random() * window.innerWidth);
+      } while (posX + 50 < highestBlock.x + 50 && posX > highestBlock.x - 50);
+      posY = highestBlock.y - Math.floor(Math.random() * 90 + 30);
 
     }
   }while(!validPos);
@@ -406,6 +426,22 @@ function platformAnimation(platform, heightGap){
       platform.y += 2;
       heightChange += 2;
     }
+  }
+}
+
+function sound(src, volume){
+  this.sound = document.createElement("audio");
+  this.sound.src = src;
+  this.sound.setAttribute("preload", "auto");
+  this.sound.setAttribute("controls", "none");
+  this.sound.volume = volume/100;
+  this.sound.style.display = "none";
+  document.body.appendChild(this.sound);
+  this.play = function(){
+    this.sound.play();
+  }
+  this.stop = function(){
+    this.sound.pause();
   }
 }
 
