@@ -29,7 +29,13 @@ var myObstacles = [];
 //Scoren
 var myScore;
 
+var mySound;
 var jumpSound;
+var backgroundMusic;
+//Google chrome lar først musikk starte etter at brukeren har gjort noe på nettsiden så lyden kan først spilles etter brukeren har gått til siden
+//https://stackoverflow.com/questions/53775957/playing-audio-file-returns-uncaught-in-promise-but-works-in-console
+var musicStarted = false;
+var mute = false;
 
 var deadFacts = [
   "Gjennomsnittlig dyrelivbestand har sunket med 60 prosent på drøyt 40 år",
@@ -46,8 +52,7 @@ var touch = [false, false];
 function startGame() {
     //Lager figuren og plasserer han i midten lavt nede
     myGamePiece = new component(30, 60, "img/player_s.gif", window.innerWidth/2-15, window.innerHeight-280, "image");
-
-    jumpSound = new sound("sounds/jump.wav", 0.4);
+    mySound = new component(40, 32, "img/sound_on.png", 10, window.innerHeight-40, "image");
 
     //Start blokken som han starter oppå
     //Å Gjøre endre størrelse utifra skjermstørrelse
@@ -80,6 +85,8 @@ function startGame() {
     myGamePiece.gravity = 0.5;
     //Viser scoren
     myScore = new component("30px", "Consolas", "", 20, 40, "text");
+    jumpSound = new sound("sounds/jump.wav", 0.4);
+    backgroundMusic = new sound("sounds/background.mp3", 1);
     //Starter spiller, hvis vi kjører denne hver gang blir spillet raskere og raskere vi ønsker en konstant fart
     if(!restart)
       myGameArea.start();
@@ -106,6 +113,19 @@ var myGameArea = {
        } else {
          console.log("PC");
        }
+       window.addEventListener('mousedown', function (e){
+         if(e.clientX > 5 && e.clientX < 50 && e.clientY < window.innerHeight && e.clientY > window.innerHeight-40){
+           if(mute){
+             mute = false;
+             mySound.image.src="img/sound_on.png";
+             backgroundMusic.play();
+           } else {
+             mute = true;
+             mySound.image.src="img/sound_off.png";
+             backgroundMusic.stop();
+           }
+         }
+       })
         //Ser hvilke knapper som blir tastet
         window.addEventListener('keydown', function (e) {
             myGameArea.key = e.keyCode;
@@ -172,6 +192,10 @@ function component(width, height, src, x, y, type) {
           if ((myGameArea.key && myGameArea.key == 37)) {this.speedX = -7; myGamePiece.image.src="img/player_l.gif";} /* Bevger seg til VENSTRE */
           else if ((myGameArea.key && myGameArea.key == 39)) {this.speedX = 7; myGamePiece.image.src="img/player_r.gif";} /* Beveger seg til HØYRE */
           else {this.speedX = 0; myGamePiece.image.src="img/player_s.gif";} /* Hvis ingen av tastene blir trykt står den stille */
+        }
+        if(myGameArea.key && musicStarted == false){
+          backgroundMusic.play();
+          musicStarted = true;
         }
         this.x += this.speedX;
         this.y += this.speedY;
@@ -292,7 +316,9 @@ function updateGameArea() {
 
               myGamePiece.onBlock = i;
             }
-            jumpSound.play();
+            if(!mute){
+              jumpSound.play();
+            }
             myGamePiece.speedY = -13.2;
 
           }
@@ -309,6 +335,7 @@ function updateGameArea() {
     myScore.update();
     myGamePiece.newPos();
     myGamePiece.update();
+    mySound.update();
 }
 
 function everyinterval(n) {
@@ -438,10 +465,18 @@ function sound(src, volume){
   this.sound.style.display = "none";
   document.body.appendChild(this.sound);
   this.play = function(){
-    this.sound.play();
+    try{
+      this.sound.play();
+    }
+    catch(err){
+      console.logError("Playing sound: " + err);
+    }
   }
   this.stop = function(){
     this.sound.pause();
+  }
+  this.load = function(){
+    this.sound.load();
   }
 }
 
@@ -491,7 +526,7 @@ function touchmove(evt){
 function touchend(evt){
   touch = [false, false];
 }
-
+/*
 //Brukes til debugging
 function printMousePos(event) {
 
@@ -503,7 +538,7 @@ function printMousePos(event) {
   }
 }
 
-document.addEventListener("click", printMousePos);
+document.addEventListener("click", printMousePos);*/
 
 </script>
 <br>
