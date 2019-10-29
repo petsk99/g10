@@ -41,7 +41,6 @@ html, body {margin: 0; height: 100%; overflow: hidden}
 </style>
 </head>
 <body onload="startGame()">
-  <h1 style="font-family: Press Start 2P">Hei</h1>
 <script>
 
 //Spilleren
@@ -89,6 +88,14 @@ function startGame() {
     //Å Gjøre endre størrelse utifra skjermstørrelse
     myObstacles.push(new component(window.innerWidth, 40, "img/BakkenLava.gif", 0, window.innerHeight-40, "image"));
 
+    //Setter gravitasjonen i spiller med hvor for han "Går ned"
+    myGamePiece.gravity = 0.5;
+    //Viser scoren
+    myScore = new component("23px", "PressStart2P", "black", 20, 40, "text");
+    pauseMenu = new component("30px", "PressStart2P", "white", window.innerWidth/2, window.innerHeight/2, "text");
+    jumpSound = new sound("sounds/jump.wav", 0.4);
+    backgroundMusic = new sound("sounds/background.mp3", 1);
+
     //Starter med nok blokker
     var startBlokker = Math.floor(Math.random()*4+3);
     var oldH = window.innerHeight-20;
@@ -109,16 +116,6 @@ function startGame() {
         pleased = true;
       }
     }
-
-
-
-    //Setter gravitasjonen i spiller med hvor for han "Går ned"
-    myGamePiece.gravity = 0.5;
-    //Viser scoren
-    myScore = new component("23px", "PressStart2P", "black", 20, 40, "text");
-    pauseMenu = new component("30px", "PressStart2P", "white", window.innerWidth/2, window.innerHeight/2, "text");
-    jumpSound = new sound("sounds/jump.wav", 0.4);
-    backgroundMusic = new sound("sounds/background.mp3", 1);
     //Starter spiller, hvis vi kjører denne hver gang blir spillet raskere og raskere vi ønsker en konstant fart
     if(!restart)
       myGameArea.start();
@@ -176,7 +173,7 @@ var myGameArea = {
     }
 }
 
-function component(width, height, src, x, y, type, breakable = false) {
+function component(width, height, src, x, y, type, breakable = false, moveable = false) {
     this.type = type;
     if(this.type == "image"){
       this.image = new Image();
@@ -191,6 +188,8 @@ function component(width, height, src, x, y, type, breakable = false) {
     this.y = y;
     this.heightChange = 0;
     this.breakable = breakable;
+    this.moveable = moveable;
+    this.moveRight = true;
     this.broken = false;
     this.gravity = 0;
     this.onBlock = 0;
@@ -313,6 +312,21 @@ function updateGameArea() {
     var x, y, height, gap, minWidth, maxWidth;
 
     for (i = 0; i < myObstacles.length; i += 1) {
+        if(!paused){
+          if(myObstacles[i].moveable){
+            if(myObstacles[i].moveRight){
+              if(myObstacles[i].x + myObstacles[i].width > window.innerWidth){
+                myObstacles[i].moveRight = false;
+              }
+              myObstacles[i].x += 3;
+            } else {
+              if(myObstacles[i].x < 0){
+                myObstacles[i].moveRight = true;
+              }
+              myObstacles[i].x -= 3;
+            }
+          }
+        }
         //Ser om spilleren har krasjet i objektet
         if (myGamePiece.crashWith(myObstacles[i])) {
           //Gjør slik at figuren ikke "flyr" opp, men må lande på platformen først. Finnes det en bedre måte?
@@ -414,15 +428,23 @@ function updateGameArea() {
 
 function makePlatform(){
   var bPos = calculateBlock(false);
+  var moveable = false;
+  var breakable = false;
+
+  if(Math.floor(Math.random()*10) == 9){
+    breakable = true;
+  }
+
+  if(Math.floor(Math.random()*10) > 7){
+    moveable = true;
+  }
+
   if(myScore.score < 7500){
     myObstacles.push(new component(100, 20, "img/lava.gif", bPos[0], bPos[1], "image"));
   } else if (myScore.score > 7500 && myScore.score < 15000){
-    myObstacles.push(new component(100, 20, "img/block.gif", bPos[0], bPos[1], "image"));
+      myObstacles.push(new component(100, 20, "img/block.gif", bPos[0], bPos[1], "image", false, moveable));
   } else {
-    if(Math.floor(Math.random()*10) == 9)
-      myObstacles.push(new component(100, 30, "img/animasjoner/is_1.gif", bPos[0], bPos[1], "image", 1));
-    else
-      myObstacles.push(new component(100, 30, "img/is.gif", bPos[0], bPos[1], "image"));
+      myObstacles.push(new component(100, 30, "img/is.gif", bPos[0], bPos[1], "image", breakable, moveable));
   }
 }
 
@@ -445,8 +467,8 @@ function calculateBlock(start){
 
 
 
-    //alert(window.innerWidth);
-    var posY = highestBlock.y - Math.floor(Math.random() * 90 + 30);
+    // Slik at minste mellomrommet stiger jo høyre opp man kommer
+    var posY = highestBlock.y - Math.floor(Math.random() * 90 + 30) + Math.floor(myScore.score / 7000);
     //Spilleren hopper 165 px oppover, regne ut det?
     //Hopper 375px til siden
     /*console.log("S.x: " + myGamePiece.x + " S.y: " + (window.innerHeight-40) + " S.x + 375: " + (myGamePiece.x + 375) + " S.y: " + (window.innerHeight-40) +
@@ -471,7 +493,7 @@ function calculateBlock(start){
       do{
         var posX = Math.floor(Math.random() * window.innerWidth);
       } while (posX + 50 < highestBlock.x + 50 && posX > highestBlock.x - 50);
-      posY = highestBlock.y - Math.floor(Math.random() * 90 + 30);
+      posY = highestBlock.y - Math.floor(Math.random() * 90 + 30) + Math.floor(myScore.score / 7000);
 
     }
   }while(!validPos);
