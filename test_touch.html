@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>DOM touchmove Event</h1>
+
+<p id="myP">Touch this paragraph and move the finger to trigger a function that will write "Hello World".</p>
+
+<canvas id="can" style="width:300px; height:300px; background-color:blue;"></canvas>
+
+<p id="demo"></p>
+
+<script>
+document.getElementById("can").addEventListener("touchmove", touchmove);
+document.getElementById("can").addEventListener("touchstart", touchstart);
+document.getElementById("can").addEventListener("touchend", touchend);
+
+function touchstart(evt) {
+  document.getElementById("demo").innerHTML = "Touching " + evt.touches[0].clientX + " " + evt.touches[0].clientY;
+}
+
+function touchmove(evt){
+  document.getElementById("demo").innerHTML = "Moving " + evt.touches[0].clientX + " " + evt.touches[0].clientY;
+}
+
+function touchend(evt){
+  document.getElementById("demo").innerHTML = "Ended " + evt.touches[0].clientX + " " + evt.touches[0].clientY;
+}
+
+</script>
+
+</body>
+</html>

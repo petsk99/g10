@@ -13,7 +13,7 @@ body {
 
 canvas {
     border:1px solid #d3d3d3;
-    /*background-color: #DD0802;*/
+    /*background-color: #add8e6 ;*/
 }
 /* Fjerner muligheten til å scolle på siden så canvasen dekker hele */
 html, body {margin: 0; height: 100%; overflow: hidden}
@@ -32,6 +32,8 @@ var myScore;
 var mySound;
 var jumpSound;
 var backgroundMusic;
+
+var background;
 //Google chrome lar først musikk starte etter at brukeren har gjort noe på nettsiden så lyden kan først spilles etter brukeren har gått til siden
 //https://stackoverflow.com/questions/53775957/playing-audio-file-returns-uncaught-in-promise-but-works-in-console
 var musicStarted = false;
@@ -50,13 +52,14 @@ var restart = false;
 var touch = [false, false];
 
 function startGame() {
+    background = new component(window.innerWidth, 5000, "img/background.png", 0, -5000+window.innerHeight, "image");
     //Lager figuren og plasserer han i midten lavt nede
     myGamePiece = new component(30, 60, "img/player_s.gif", window.innerWidth/2-15, window.innerHeight-280, "image");
     mySound = new component(40, 32, "img/sound_on.png", 10, window.innerHeight-40, "image");
 
     //Start blokken som han starter oppå
     //Å Gjøre endre størrelse utifra skjermstørrelse
-    myObstacles.push(new component(window.innerWidth, 40, "img/start.gif", 0, window.innerHeight-40, "image"));
+    myObstacles.push(new component(window.innerWidth, 40, "img/BakkenLava.gif", 0, window.innerHeight-40, "image"));
 
     //Starter med nok blokker
     var startBlokker = Math.floor(Math.random()*4+3);
@@ -68,7 +71,7 @@ function startGame() {
         //Parameterne fra bPos er x, y
         var bPos = calculateBlock(true);
         //alert(bPos);
-        myObstacles.push(new component(100, 20, "img/block.gif", bPos[0], bPos[1], "image"));
+        myObstacles.push(new component(100, 20, "img/lava.gif", bPos[0], bPos[1], "image"));
       }
       //Denne passer på at hele skjermen blir fylt
       if(myObstacles[myObstacles.length-1].y > 150){
@@ -282,6 +285,7 @@ function updateGameArea() {
               //alert("ny blokk");
               var heightGap = myObstacles[myGamePiece.onBlock].y - myObstacles[i].y;
 
+              platformAnimation(background, heightGap, 1);
               myScore.score += heightGap;
 
               //Lager nye blokker, lager mellom 1 og 4? nye blokker
@@ -290,8 +294,22 @@ function updateGameArea() {
               for(var b = 0; b < newBlocks; b++){
                 //Må lage fra bunnen av skjermen og oppover for at det ikke skal bli buggs med blokken den lander på og få skjermen opp
                 var bPos = calculateBlock(false);
+
+                //Forskjellige type blokker
+                /*var blokkType = Math.floor(Math.random()*10);
+                if(blokkType == 9){
+                  myObstacles.push(new component(100, 20, "img/is.png", bPos[0], bPos[1], "image"));
+                } else {
+                  myObstacles.push(new component(100, 20, "img/block.gif", bPos[0], bPos[1], "image"));
+                }*/
+                if(myScore.score < 7500){
+                  myObstacles.push(new component(100, 20, "img/lava.gif", bPos[0], bPos[1], "image"));
+                } else if (myScore.score > 7500 && myScore.score < 15000){
+                  myObstacles.push(new component(100, 20, "img/block.gif", bPos[0], bPos[1], "image"));
+                } else {
+                  myObstacles.push(new component(100, 20, "img/is.gif", bPos[0], bPos[1], "image"));
+                }
                 //alert(bPos);
-                myObstacles.push(new component(100, 20, "img/block.gif", bPos[0], bPos[1], "image"));
               }
 
               //For å passe på at skjermen alltid er full
@@ -300,7 +318,16 @@ function updateGameArea() {
                 if(myObstacles[myObstacles.length-1].y > -50){
                   var bPos = calculateBlock(false);
                   console.log("ikke fullskjerm");
-                  myObstacles.push(new component(100, 20, "img/block.gif", bPos[0], bPos[1], "image"));
+
+
+                  if(myScore.score < 7500){
+                    myObstacles.push(new component(100, 20, "img/lava.gif", bPos[0], bPos[1], "image"));
+                  } else if (myScore.score > 7500 && myScore.score < 15000){
+                    myObstacles.push(new component(100, 20, "img/block.gif", bPos[0], bPos[1], "image"));
+                  } else {
+                    myObstacles.push(new component(100, 30, "img/is.gif", bPos[0], bPos[1], "image"));
+                  }
+
                 } else {
                   fullScreen = true;
                 }
@@ -308,7 +335,7 @@ function updateGameArea() {
 
               //Flytter alle blokkene ned med høydeforskjellen mellom gamle og nye blokken
               for(blokk of myObstacles){
-                platformAnimation(blokk, heightGap);
+                platformAnimation(blokk, heightGap, 0);
                 //blokk.y += heightGap;
                 //Skrur ned farten hans så han ikke flyr opp når alle andre beveger seg ned Finnes det en bedre måte?
               }
@@ -326,6 +353,7 @@ function updateGameArea() {
     }
     myGameArea.clear();
     myGameArea.frameNo += 1;
+    background.update();
     for (i = 0; i < myObstacles.length; i += 1) {
         //Flytter objektet
         //myObstacles[i].y += 1;
@@ -443,18 +471,24 @@ function area(x1,y1,x2,y2,x3,y3){
   return Math.abs((x1*(y2-y3) + x2*(y3-y1)+x3*(y1-y2))/2.0);
 }
 
-function platformAnimation(platform, heightGap){
+function platformAnimation(platform, heightGap, isBackground){
   var heightChange = 0;
   var id = setInterval(frame, 10);
   function frame(){
     if(heightChange >= heightGap){
       clearInterval(id);
     } else {
-      platform.y += 2;
-      heightChange += 2;
+      if(isBackground){
+        platform.y += 1;
+        heightChange += 1;
+      } else {
+        platform.y += 2;
+        heightChange += 2;
+      }
     }
   }
 }
+
 
 function sound(src, volume){
   this.sound = document.createElement("audio");
@@ -479,6 +513,7 @@ function sound(src, volume){
     this.sound.load();
   }
 }
+
 
 function restartGame(){
   myGamePiece = [];

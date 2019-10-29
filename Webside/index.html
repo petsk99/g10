@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <title>Jump To Save Humanity</title>
+    <link rel="stylesheet" href="index.css" media="screen" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+      media="screen"
+    />
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css"
+      media="screen"
+    />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css?family=Press+Start+2P"
+      rel="stylesheet"
+    />
+    <link href="https://unpkg.com/nes.css/css/nes.css" rel="stylesheet" />
+    <title></title>
+    <body id="bakgrunn"></body>
+  </head>
+  <body>
+    <div class="container" id="webside">
+      <!-- Spilleregler -->
+      <div class="text" id="srtekst">
+        <h1>Spillregler</h1>
+        <br />
+        <br />
+        <ol id="regler">
+          <li>Styr figuren med piltastene</li>
+          <li>Dersom du faller ned på bakken er spillet over</li>
+          <li>Jo lengere opp du kommer deg, jo fler poeng får du</li>
+        </ol>
+      </div>
+      <!-- Utviklere -->
+      <div class="text" id="uttekst">
+        <h1>Utviklere</h1>
+        <div class="container" id="csebastian">
+          <div><img src="img/Sebastian.png" id="sebastian" /></div>
+          <p id="tsebastian">
+            Hei! Mitt navn er Sebastian Stixrud, 22 år og kommer fra Kongsberg.
+            Jeg går førsteåret på Digital Forretningsutvikling. I tillegg til
+            skole jobber jeg deltid på Lindorff og er ofte å finne på Samfundet
+            i helgene! Favoritt-smågodtet mitt må nesten være vaniljefudge!
+          </p>
+        </div>
+        <div class="container" id="cheidrun">
+          <div><img src="img/Figur stående.png" id="heidrun" /></div>
+          <p id="theidrun">
+              Hallo! Mitt navn er Heidrun Synslien. Jeg er 25 år og kommer fra Otta i Gudbrandsdalen.
+              Utenom studiet digital forretningsutvikling bruker jeg det meste av tiden min på jobb i DNB og sammen med venner.
+              Jeg er også veldig glad i å reise. Favoritt-smågodtet mitt er nok sur diamant.
+          </p>
+        </div>
+        <div class="container" id="cellinor">
+          <div><img src="img/Figur stående.png" id="ellinor" /></div>
+          <p id="tellinor">
+             Hei! Mitt navn er Ellinor Sørvig, 25 år, og kommer fra Helgeland.
+             Jeg har nettopp startet på digital forretningsutvikling, jobber ved siden av på Samfundet og på SFO.
+             Når jeg ikke er på Samfundet, skole eller jobb, setter jeg pris på å koble av sammen med gode venner.
+             Favoritten i smågodtposen tror jeg må være de røde fiskene!
+          </p>
+        </div>
+        <div class="container" id="csebastian4">
+          <div><img src="img/Figur stående.png" id="sebastian4" /></div>
+          <p id="tsebastian4">
+            Lorem ipsum
+          </p>
+        </div>
+        <div class="container" id="csebastian5">
+            <div> <img src="img/Figur stående.png" id="sebastian5" ></div>
+            <p id=tsebastian5> Lorem ipsum </p>
+           </div>
+      </div>
+      <!-- Historie -->
+      <div class="text" id="htekst">
+        <h1>Historie</h1>
+
+        Året er 2105 og klimaendringene slakker aldri ned. FNs klimarapport i
+        2012 viste at ved verste utfall ville den den globale lufttemperaturen
+        øke med 7 grader innen 2100, den økte med 15 grader. Halvparten av
+        jorden er ubeboelig og den andre halvparten ser på stormer og orkaner
+        som en frisk bris.
+        <br /><br />
+        Jorden har fått nok av menneskeheten, ingen plass er trygt lenger.
+        Jorden detter sammen, jordskorpeplaten beveger seg i høy hastighet og
+        tsunamier ser ut som vanlig bølger. Slik som den gjorde for dinosaurene,
+        har jordens undergang kommet for menneskeheten. Det eneste du kan gjøre
+        nå for å redde menneskeheten er å hoppe deg ut av jordas atmosfære og
+        finne et nytt sted å gjenopprette menneskerasen. Universet er uendelig
+        og det er uvisst om du finne en ny verden for menneske, vil du finne et
+        sted?
+      </div>
+
+      <!--Forside -->
+
+      <div class="container" id="forside">
+        <h1 id="tittel">
+          Jump To <br />
+          Save Humanity
+        </h1>
+
+        <button onclick="spillet()" id="startspillet"></button>
+
+        <div><img src="img/figur.png" id="figur" /></div>
+
+        <button onclick="spilleregler()" id="spilleregler"></button>
+
+        <button onclick="historie()" id="historie"></button>
+
+        <button onclick="utviklerne()" id="utviklerne"></button>
+      </div>
+
+      <!--Tilbake -->
+      <button onclick="tilbake()" id="tilbake"></button>
+    </div>
+    <!--.js Script -->
+    <script type="text/javascript" src="index.js"></script>
+    <!--Slutt -->
+  </body>
+</html>
