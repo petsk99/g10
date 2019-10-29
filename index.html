@@ -1,10 +1,31 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
   <head>
-    <meta charset="utf-8">
+    <meta charset="utf-8" />
+    <title>Jump To Save Humanity</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+      media="screen"
+    />
+    <style>@import url('https://fonts.googleapis.com/css?family=Press+Start+2P&display=swap');
+    </style>
     <title></title>
+    <body id="bakgrunn"></body>
   </head>
-  <body>
-    Yeeey
+  <body><span style="font-family: 'Lobster', cursive;">&nbsp;</span>
+<canvas id=c width=500 height=500></canvas>
   </body>
+  <script>
+var ctx = document.getElementById('c').getContext('2d');
+var kitty = new Image();
+kitty.src = 'http://i954.photobucket.com/albums/ae30/rte148/891blog_keyboard_cat.gif';
+kitty.onload = function(){
+  ctx.drawImage(this, 0,0,this.width, this.height);
+  ctx.font         = '68px Press Start 2P';
+  ctx.fillStyle = 'orangered';
+  ctx.textBaseline = 'top';
+  ctx.fillText  ('Keyboard Cat', 0, 270);
+};
+</script>
 </html>

@@ -124,6 +124,8 @@ function component(width, height, color, x, y, type, breakable = 0) {
 }
 function updateGameArea() {
     var x, y, height, gap, minWidth, maxWidth;
+
+    //HVA ER DETTE?
     for (i = 0; i < myObstacles.length; i += 1) {
         //Ser om spilleren har krasjet i objektet
         if (myGamePiece.crashWith(myObstacles[i])) {

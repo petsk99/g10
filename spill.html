@@ -5,7 +5,28 @@
 <meta charset="UTF-8"/>
 <title>Jump save humanity</title>
 <link rel="shortcut icon" type="image/x-icon" href="img/player_s.gif" />
+
+
 <style>
+
+/* Implementerer pixel font */
+@font-face {
+  font-family: 'PressStart2P';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Press Start 2P Regular'), local('PressStart2P-Regular'), url(https://fonts.gstatic.com/s/pressstart2p/v8/e3t4euO8T-267oIAQAu6jDQyK3nYivN04w.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* latin */
+@font-face {
+  font-family: 'PressStart2P';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Press Start 2P Regular'), local('PressStart2P-Regular'), url(https://fonts.gstatic.com/s/pressstart2p/v8/e3t4euO8T-267oIAQAu6jDQyK3nVivM.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
 
 body {
   margin: 0;
@@ -20,6 +41,7 @@ html, body {margin: 0; height: 100%; overflow: hidden}
 </style>
 </head>
 <body onload="startGame()">
+  <h1 style="font-family: Press Start 2P">Hei</h1>
 <script>
 
 //Spilleren
@@ -38,12 +60,18 @@ var background;
 //https://stackoverflow.com/questions/53775957/playing-audio-file-returns-uncaught-in-promise-but-works-in-console
 var musicStarted = false;
 var mute = false;
+var paused = false;
+var pauseMenu;
 
 var deadFacts = [
   "Gjennomsnittlig dyrelivbestand har sunket med 60 prosent på drøyt 40 år",
   "Det er mer karbondioksid i atmosfæren vår nå enn noen gang i menneskets historie",
   "To tredjedeler av ekstremværhendelser de siste 20 årene har vært påvirket av mennesker",
-  "120 000 kvadratkilometer tropisk skog gikk tapt i 2018"
+  "120 000 kvadratkilometer tropisk skog gikk tapt i 2018",
+  "Tiner eller smelter permafrosten? Akkurat som et frossent brød, vil permafrosten tine",
+  "Siden fisk som torsken trenger en veldig spesifikk temperatur for å kunne gyte, vil den økende temperaturen i havet gjøre at torsken flykter nordover og vekk fra det norske hav",
+  "Hvis man stoppet alt av klimagassutslipp ville det fortsatt skje klimaendringer, siden karbondioksid levealder i atmosfæren er 12 år og metan mye lengre",
+  "Før den industrielle revolusjon var verden på vei mot en ny istid, men de enorme mengdene klimautslipp som kom med revolusjon skjøt den globale lufttemperaturen i været"
 ];
 
 var restart = false;
@@ -87,7 +115,8 @@ function startGame() {
     //Setter gravitasjonen i spiller med hvor for han "Går ned"
     myGamePiece.gravity = 0.5;
     //Viser scoren
-    myScore = new component("30px", "Consolas", "", 20, 40, "text");
+    myScore = new component("23px", "PressStart2P", "black", 20, 40, "text");
+    pauseMenu = new component("30px", "PressStart2P", "white", window.innerWidth/2, window.innerHeight/2, "text");
     jumpSound = new sound("sounds/jump.wav", 0.4);
     backgroundMusic = new sound("sounds/background.mp3", 1);
     //Starter spiller, hvis vi kjører denne hver gang blir spillet raskere og raskere vi ønsker en konstant fart
@@ -134,6 +163,9 @@ var myGameArea = {
             myGameArea.key = e.keyCode;
         })
         window.addEventListener('keyup', function (e) {
+          if ((myGameArea.key && myGameArea.key == 27)) {
+            paused = !paused;
+          }
             myGameArea.key = false;
         })
         },
@@ -144,7 +176,7 @@ var myGameArea = {
     }
 }
 
-function component(width, height, src, x, y, type) {
+function component(width, height, src, x, y, type, breakable = false) {
     this.type = type;
     if(this.type == "image"){
       this.image = new Image();
@@ -158,13 +190,15 @@ function component(width, height, src, x, y, type) {
     this.x = x;
     this.y = y;
     this.heightChange = 0;
+    this.breakable = breakable;
+    this.broken = false;
     this.gravity = 0;
     this.onBlock = 0;
     this.update = function() {
         ctx = myGameArea.context;
         if (this.type == "text") {
             ctx.font = this.width + " " + this.height;
-            ctx.fillStyle = 'black';
+            ctx.fillStyle = src;
             ctx.fillText(this.text, this.x, this.y);
         } else if(type == "image"){
           ctx.drawImage(this.image,
@@ -177,6 +211,7 @@ function component(width, height, src, x, y, type) {
         }
     }
     this.newPos = function() {
+      if(!paused){
         this.speedY += this.gravity;
           //Får hvilke tast det er fra https://keycode.info/
         //Å gjøre: Få farten til å være relativ til størrelsen på skjermen
@@ -205,6 +240,7 @@ function component(width, height, src, x, y, type) {
         this.hitBottom();
         this.hitRight();
         this.hitLeft();
+      }
     }
     //Når den treffer høyre side
     this.hitRight = function(){
@@ -236,15 +272,17 @@ function component(width, height, src, x, y, type) {
                 alert("Din score ble: " + myScore.score+"\nHighscoren er på: "+newHigh[1]+"\n"+deadFacts[Math.floor(Math.random()*deadFacts.length)]);
               }
             } else {*/
-              alert("Din score ble: " + myScore.score+"\n Viste du at: "+deadFacts[Math.floor(Math.random()*deadFacts.length)]);
+
+            this.y = -200;
+            this.speedY = 0;
+            this.speedX = 0;
+            //Fjerne?
+            alert("Din score ble: " + myScore.score+"\nViste du at: "+deadFacts[Math.floor(Math.random()*deadFacts.length)]);
               /*document.cookie = "highscore="+myScore.score;
             }*/
 
 
             //alert("dead");
-            this.y = rockbottom;
-            this.speedY = 0;
-            this.speedX = 0;
 
             restartGame();
         }
@@ -273,15 +311,26 @@ function component(width, height, src, x, y, type) {
 
 function updateGameArea() {
     var x, y, height, gap, minWidth, maxWidth;
+
     for (i = 0; i < myObstacles.length; i += 1) {
         //Ser om spilleren har krasjet i objektet
         if (myGamePiece.crashWith(myObstacles[i])) {
           //Gjør slik at figuren ikke "flyr" opp, men må lande på platformen først. Finnes det en bedre måte?
 
           //Ser at spilleren faller også blir det bedre flyt i spillet hvis det er 0.5
-          if(myGamePiece.speedY > 0.5){
+          if(myGamePiece.speedY > 0.5 && myObstacles[i].broken == false){
 
             if(myGamePiece.onBlock < i){
+
+              //PLatform kan brekke i 2
+              if(myObstacles[i].breakable){
+                myObstacles[i].image.src = "img/animasjoner/is_2.gif";
+                myObstacles[i].broken = true;
+              }
+
+
+
+
               //alert("ny blokk");
               var heightGap = myObstacles[myGamePiece.onBlock].y - myObstacles[i].y;
 
@@ -293,7 +342,6 @@ function updateGameArea() {
               //Kan endre størrelsen på blokkene
               for(var b = 0; b < newBlocks; b++){
                 //Må lage fra bunnen av skjermen og oppover for at det ikke skal bli buggs med blokken den lander på og få skjermen opp
-                var bPos = calculateBlock(false);
 
                 //Forskjellige type blokker
                 /*var blokkType = Math.floor(Math.random()*10);
@@ -302,13 +350,7 @@ function updateGameArea() {
                 } else {
                   myObstacles.push(new component(100, 20, "img/block.gif", bPos[0], bPos[1], "image"));
                 }*/
-                if(myScore.score < 7500){
-                  myObstacles.push(new component(100, 20, "img/lava.gif", bPos[0], bPos[1], "image"));
-                } else if (myScore.score > 7500 && myScore.score < 15000){
-                  myObstacles.push(new component(100, 20, "img/block.gif", bPos[0], bPos[1], "image"));
-                } else {
-                  myObstacles.push(new component(100, 20, "img/is.gif", bPos[0], bPos[1], "image"));
-                }
+                makePlatform();
                 //alert(bPos);
               }
 
@@ -316,17 +358,9 @@ function updateGameArea() {
               var fullScreen = false;
               while(!fullScreen){
                 if(myObstacles[myObstacles.length-1].y > -50){
-                  var bPos = calculateBlock(false);
                   console.log("ikke fullskjerm");
 
-
-                  if(myScore.score < 7500){
-                    myObstacles.push(new component(100, 20, "img/lava.gif", bPos[0], bPos[1], "image"));
-                  } else if (myScore.score > 7500 && myScore.score < 15000){
-                    myObstacles.push(new component(100, 20, "img/block.gif", bPos[0], bPos[1], "image"));
-                  } else {
-                    myObstacles.push(new component(100, 30, "img/is.gif", bPos[0], bPos[1], "image"));
-                  }
+                  makePlatform();
 
                 } else {
                   fullScreen = true;
@@ -364,6 +398,32 @@ function updateGameArea() {
     myGamePiece.newPos();
     myGamePiece.update();
     mySound.update();
+    if(paused){
+      myGameArea.context.fillStyle = "rgba(0, 0, 0, 0.5)";
+      myGameArea.context.fillRect(0, 0, window.innerWidth, window.innerHeight);
+      myGameArea.context.font = "PressStart2P";
+      myGameArea.context.fontSize = "30px";
+      pauseMenu.text = "PAUSED";
+      pauseMenu.x = window.innerWidth / 2 - myGameArea.context.measureText(pauseMenu.text).width / 2 - 15;
+      pauseMenu.y = window.innerHeight / 2 - 15;
+      pauseMenu.update();
+    }
+
+
+}
+
+function makePlatform(){
+  var bPos = calculateBlock(false);
+  if(myScore.score < 7500){
+    myObstacles.push(new component(100, 20, "img/lava.gif", bPos[0], bPos[1], "image"));
+  } else if (myScore.score > 7500 && myScore.score < 15000){
+    myObstacles.push(new component(100, 20, "img/block.gif", bPos[0], bPos[1], "image"));
+  } else {
+    if(Math.floor(Math.random()*10) == 9)
+      myObstacles.push(new component(100, 30, "img/animasjoner/is_1.gif", bPos[0], bPos[1], "image", 1));
+    else
+      myObstacles.push(new component(100, 30, "img/is.gif", bPos[0], bPos[1], "image"));
+  }
 }
 
 function everyinterval(n) {
@@ -478,7 +538,8 @@ function platformAnimation(platform, heightGap, isBackground){
     if(heightChange >= heightGap){
       clearInterval(id);
     } else {
-      if(isBackground){
+      if(paused){}
+      else if(isBackground){
         platform.y += 1;
         heightChange += 1;
       } else {
