@@ -94,7 +94,7 @@ function startGame() {
     myGamePiece = new component(30, 60, "img/player_s.gif", window.innerWidth/2-15, window.innerHeight-280, "image");
 
     //Start blokken som han starter oppå
-    myObstacles.push(new component(window.innerWidth, 40, "img/BakkenLava.gif", 0, window.innerHeight-40, "image"));
+    myObstacles.push(new component(window.innerWidth, 40, "img/platform/BakkenLava.gif", 0, window.innerHeight-40, "image"));
 
     //Spilleren får gravitasjon slik at han "faller"
     myGamePiece.gravity = 0.5;
@@ -113,7 +113,7 @@ function startGame() {
     while(!pleased){
       for(var b = 0; b < startBlokker; b++){
         var bPos = calculateBlock(true);
-        myObstacles.push(new component(100, 20, "img/lava.gif", bPos[0], bPos[1], "image"));
+        myObstacles.push(new component(100, 20, "img/platform/lava.gif", bPos[0], bPos[1], "image"));
       }
       //Denne passer på at hele skjermen blir fylt
       if(myObstacles[myObstacles.length-1].y > 150){
@@ -412,12 +412,12 @@ function makePlatform(){
 
   //Endrer hvilke platformer som blir laget utifra scoren
   if(myScore.score < 10000){
-    myObstacles.push(new component(100, 20, "img/lava.gif", bPos[0], bPos[1], "image"));
+    myObstacles.push(new component(100, 20, "img/platform/lava.gif", bPos[0], bPos[1], "image"));
   } else if (myScore.score > 10000 && myScore.score < 20000){
-    myObstacles.push(new component(100, 20, "img/block.gif", bPos[0], bPos[1], "image", false, moveable));
+    myObstacles.push(new component(100, 20, "img/platform/block.gif", bPos[0], bPos[1], "image", false, moveable));
     spawnClouds();
   } else {
-      myObstacles.push(new component(100, 30, "img/is.gif", bPos[0], bPos[1], "image", breakable, moveable));
+      myObstacles.push(new component(100, 30, "img/platform/is.gif", bPos[0], bPos[1], "image", breakable, moveable));
   }
 }
 
