@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <meta charset="UTF-8"/>
 <title>Jump save humanity</title>
-<link rel="shortcut icon" type="image/x-icon" href="img/player_s.gif" />
+<link rel="shortcut icon" type="image/x-icon" href="img/spiller/player_s.gif" />
 
 
 <style>
@@ -85,13 +85,13 @@ var touch = [false, false];
 
 function startGame() {
     //De forskjellige bakgrunnene, og lyd ikonet
-    gradientBackground = new component(window.innerWidth, 30000, "img/background.png", 0, -30000+window.innerHeight, "image");
-    vulcano = new component(window.innerWidth, 300, "img/vulcano.png", 0, window.innerHeight-300, "image");
-    spaceBackground = new component(window.innerWidth, window.innerHeight, "img/space.png", 0, 0, "image");
-    mySound = new component(40, 32, "img/sound_on.png", 10, window.innerHeight-40, "image");
+    gradientBackground = new component(window.innerWidth, 30000, "img/bakgrunn/background.png", 0, -30000+window.innerHeight, "image");
+    vulcano = new component(window.innerWidth, 300, "img/bakgrunn/vulcano.png", 0, window.innerHeight-300, "image");
+    spaceBackground = new component(window.innerWidth, window.innerHeight, "img/bakgrunn/space.png", 0, 0, "image");
+    mySound = new component(40, 32, "img/diverse/sound_on.png", 10, window.innerHeight-40, "image");
 
     //Lager figuren og plasserer han i midten
-    myGamePiece = new component(30, 60, "img/player_s.gif", window.innerWidth/2-15, window.innerHeight-280, "image");
+    myGamePiece = new component(30, 60, "img/spiller/player_s.gif", window.innerWidth/2-15, window.innerHeight-280, "image");
 
     //Start blokken som han starter oppå
     myObstacles.push(new component(window.innerWidth, 40, "img/platform/BakkenLava.gif", 0, window.innerHeight-40, "image"));
@@ -153,11 +153,11 @@ var myGameArea = {
          if(e.clientX > 5 && e.clientX < 50 && e.clientY < window.innerHeight && e.clientY > window.innerHeight-40){
            if(mute){
              mute = false;
-             mySound.image.src="img/sound_on.png";
+             mySound.image.src="img/diverse/sound_on.png";
              backgroundMusic.play();
            } else {
              mute = true;
-             mySound.image.src="img/sound_off.png";
+             mySound.image.src="img/diverse/sound_off.png";
              backgroundMusic.stop();
            }
          }
@@ -222,13 +222,13 @@ function component(width, height, src, x, y, type, breakable = false, moveable =
           //Får hvilke tast det er fra https://keycode.info/
         //Bevegelse på mobilen
         if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
-          if(touch[0] && touch[1]){ this.speedX = -7; myGamePiece.image.src="img/player_l.gif"; } // VENSTRE
-          else if(touch[0] && !touch[1]){ this.speedX = 7; myGamePiece.image.src="img/player_r.gif"; } // HØYRE
-          else { this.speedX = 0;myGamePiece.image.src="img/player_s.gif"; }
+          if(touch[0] && touch[1]){ this.speedX = -7; myGamePiece.image.src="img/spiller/player_l.gif"; } // VENSTRE
+          else if(touch[0] && !touch[1]){ this.speedX = 7; myGamePiece.image.src="img/spiller/player_r.gif"; } // HØYRE
+          else { this.speedX = 0;myGamePiece.image.src="img/spiller/player_s.gif"; }
         } else {
-          if ((myGameArea.key && myGameArea.key == 37)) {this.speedX = -7; myGamePiece.image.src="img/player_l.gif";} /* Bevger seg til VENSTRE */
-          else if ((myGameArea.key && myGameArea.key == 39)) {this.speedX = 7; myGamePiece.image.src="img/player_r.gif";} /* Beveger seg til HØYRE */
-          else {this.speedX = 0; myGamePiece.image.src="img/player_s.gif";} /* Hvis ingen av tastene blir trykt står den stille */
+          if ((myGameArea.key && myGameArea.key == 37)) {this.speedX = -7; myGamePiece.image.src="img/spiller/player_l.gif";} /* Bevger seg til VENSTRE */
+          else if ((myGameArea.key && myGameArea.key == 39)) {this.speedX = 7; myGamePiece.image.src="img/spiller/player_r.gif";} /* Beveger seg til HØYRE */
+          else {this.speedX = 0; myGamePiece.image.src="img/spiller/player_s.gif";} /* Hvis ingen av tastene blir trykt står den stille */
         }
         //I Google Chrome kan man kun auto starte musikk etter input på nettsiden
         if(myGameArea.key && musicStarted == false){
