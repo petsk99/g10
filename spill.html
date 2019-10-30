@@ -80,24 +80,26 @@ var deadFacts = [
 
 var restart = false;
 
-//Parameterne er: omTrykket, venstre | hvis den ikke går venstre går den høyre
+//Parameterne er: omTrykket, motVenstre | Antar at det ikke går an å trykke ned og ikke ville flytte ett sted
 var touch = [false, false];
 
 function startGame() {
+    //De forskjellige bakgrunnene, og lyd ikonet
     gradientBackground = new component(window.innerWidth, 30000, "img/background.png", 0, -30000+window.innerHeight, "image");
     vulcano = new component(window.innerWidth, 300, "img/vulcano.png", 0, window.innerHeight-300, "image");
     spaceBackground = new component(window.innerWidth, window.innerHeight, "img/space.png", 0, 0, "image");
-    //Lager figuren og plasserer han i midten lavt nede
-    myGamePiece = new component(30, 60, "img/player_s.gif", window.innerWidth/2-15, window.innerHeight-280, "image");
     mySound = new component(40, 32, "img/sound_on.png", 10, window.innerHeight-40, "image");
 
+    //Lager figuren og plasserer han i midten
+    myGamePiece = new component(30, 60, "img/player_s.gif", window.innerWidth/2-15, window.innerHeight-280, "image");
+
     //Start blokken som han starter oppå
-    //Å Gjøre endre størrelse utifra skjermstørrelse
     myObstacles.push(new component(window.innerWidth, 40, "img/BakkenLava.gif", 0, window.innerHeight-40, "image"));
 
-    //Setter gravitasjonen i spiller med hvor for han "Går ned"
+    //Spilleren får gravitasjon slik at han "faller"
     myGamePiece.gravity = 0.5;
-    //Viser scoren
+
+    //Laster teksten som kan bli vist
     myScore = new component("23px", "PressStart2P", "black", 20, 40, "text");
     pauseMenu = new component("30px", "PressStart2P", "white", window.innerWidth/2, window.innerHeight/2, "text");
 
@@ -107,14 +109,10 @@ function startGame() {
 
     //Starter med nok blokker
     var startBlokker = Math.floor(Math.random()*4+3);
-    var oldH = window.innerHeight-20;
     var pleased = false;
     while(!pleased){
       for(var b = 0; b < startBlokker; b++){
-        //Må lage fra bunnen av skjermen og oppover for at det ikke skal bli buggs med blokken den lander på og få skjermen opp
-        //Parameterne fra bPos er x, y
         var bPos = calculateBlock(true);
-        //alert(bPos);
         myObstacles.push(new component(100, 20, "img/lava.gif", bPos[0], bPos[1], "image"));
       }
       //Denne passer på at hele skjermen blir fylt
@@ -125,17 +123,15 @@ function startGame() {
         pleased = true;
       }
     }
-    //Starter spiller, hvis vi kjører denne hver gang blir spillet raskere og raskere vi ønsker en konstant fart
+    //Starter spiller hvis det ikke har startet før
     if(!restart)
       myGameArea.start();
 }
-//Er en object
+
 var myGameArea = {
-    //Lager hvis spillet skjer
     canvas : document.createElement("canvas"),
 
     start : function() {
-      //Å Gjøre Få den til å oppdatere canvas størrelsen når man endrer på skjerm størrelsen
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
         this.context = this.canvas.getContext("2d");
@@ -144,6 +140,7 @@ var myGameArea = {
         this.score = 0;
         this.interval = setInterval(updateGameArea, 20);
 
+        //Event listeners for mobil og nettbrett med trykking istedet for keyboard
         if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
          window.addEventListener("touchstart", touchstart);
          window.addEventListener("toucmove", touchmove);
@@ -151,6 +148,7 @@ var myGameArea = {
        } else {
          console.log("PC");
        }
+       //For å kunne mute
        window.addEventListener('mousedown', function (e){
          if(e.clientX > 5 && e.clientX < 50 && e.clientY < window.innerHeight && e.clientY > window.innerHeight-40){
            if(mute){
@@ -222,44 +220,37 @@ function component(width, height, src, x, y, type, breakable = false, moveable =
       if(!paused){
         this.speedY += this.gravity;
           //Får hvilke tast det er fra https://keycode.info/
-        //Å gjøre: Få farten til å være relativ til størrelsen på skjermen
-
+        //Bevegelse på mobilen
         if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
-          if(touch[0] && touch[1]){
-            //alert("venstre");
-            this.speedX = -7; myGamePiece.image.src="img/player_l.gif";
-          } else if(touch[0] && !touch[1]){
-            //alert("høyre");
-            this.speedX = 7; myGamePiece.image.src="img/player_r.gif";
-          } else {
-            this.speedX = 0;myGamePiece.image.src="img/player_s.gif";
-          }
+          if(touch[0] && touch[1]){ this.speedX = -7; myGamePiece.image.src="img/player_l.gif"; } // VENSTRE
+          else if(touch[0] && !touch[1]){ this.speedX = 7; myGamePiece.image.src="img/player_r.gif"; } // HØYRE
+          else { this.speedX = 0;myGamePiece.image.src="img/player_s.gif"; }
         } else {
           if ((myGameArea.key && myGameArea.key == 37)) {this.speedX = -7; myGamePiece.image.src="img/player_l.gif";} /* Bevger seg til VENSTRE */
           else if ((myGameArea.key && myGameArea.key == 39)) {this.speedX = 7; myGamePiece.image.src="img/player_r.gif";} /* Beveger seg til HØYRE */
           else {this.speedX = 0; myGamePiece.image.src="img/player_s.gif";} /* Hvis ingen av tastene blir trykt står den stille */
         }
+        //I Google Chrome kan man kun auto starte musikk etter input på nettsiden
         if(myGameArea.key && musicStarted == false){
           backgroundMusic.play();
           musicStarted = true;
         }
         this.x += this.speedX;
         this.y += this.speedY;
+        //Ser etter kolisjoner på siden
         this.hitBottom();
         this.hitRight();
         this.hitLeft();
       }
     }
-    //Når den treffer høyre side
+
     this.hitRight = function(){
       var rightSide = myGameArea.canvas.width - this.width;
       if(this.x > rightSide){
-        //alert("Right");
         this.speedX = 0;
         this.x = rightSide;
       }
     }
-    //Når den treffer venstre side
     this.hitLeft = function(){
       var leftSide = 0;
       if(this.x < leftSide){
@@ -267,53 +258,37 @@ function component(width, height, src, x, y, type, breakable = false, moveable =
         this.x = leftSide;
       }
     }
-    //Når den treffer bakken
     this.hitBottom = function() {
         var rockbottom = myGameArea.canvas.height - this.height;
         if (this.y > rockbottom) {
             //De traff bunnen så de har tapt
-            /*if(document.cookie != ""){
-              var newHigh = checkHighscore();
-              if(newHigh[0]){
-                alert("Ny highscore: " + myScore.score+"\n"+deadFacts[Math.floor(Math.random()*deadFacts.length)]);
-              } else {
-                alert("Din score ble: " + myScore.score+"\nHighscoren er på: "+newHigh[1]+"\n"+deadFacts[Math.floor(Math.random()*deadFacts.length)]);
-              }
-            } else {*/
 
             this.y = -200;
             this.speedY = 0;
             this.speedX = 0;
-            //Fjerne?
+
             alert("Din score ble: " + myScore.score+"\nViste du at: "+deadFacts[Math.floor(Math.random()*deadFacts.length)]);
-              /*document.cookie = "highscore="+myScore.score;
-            }*/
-
-
-            //alert("dead");
 
             restartGame();
         }
     }
     this.crashWith = function(otherobj) {
-
+        //p står for platform
+        //c står for character (spilleren)
         var pRigth = otherobj.x + (otherobj.width);
         var pLeft = otherobj.x;
         var pTop = otherobj.y;
         var pBottom = otherobj.y + (otherobj.height);
-        //this er spilleren
         var cRight = this.x + (this.width);
         var cLeft = this.x;
         var cBottom = this.y + (this.height);
-        //Har ikke med chacter sitt hode så cTop er ikke med. Ettersom at vi ønsker at han kun kan hoppe med benene sine
+        //Har ikke med spileren sitt hode så cTop er ikke med. Ettersom at vi ønsker at han kun kan hoppe med benene sine
         var crash = false;
 
         if(((pLeft < cRight) && (pRigth > cLeft) && (pBottom > cBottom) && (pTop < cBottom))){
           crash = true;
         }
-
         return crash;
-
     }
 }
 
@@ -321,96 +296,75 @@ function updateGameArea() {
     var x, y, height, gap, minWidth, maxWidth;
 
     for (i = 0; i < myObstacles.length; i += 1) {
-        if(!paused){
-          if(myObstacles[i].moveable){
-            if(myObstacles[i].moveRight){
-              if(myObstacles[i].x + myObstacles[i].width > window.innerWidth){
-                myObstacles[i].moveRight = false;
-              }
-              myObstacles[i].x += 3;
-            } else {
-              if(myObstacles[i].x < 0){
-                myObstacles[i].moveRight = true;
-              }
-              myObstacles[i].x -= 3;
+      //Ser om spillet er pauset, hvis det ikke er det og platformen er av typen moveable flyttet den på seg
+      if(!paused){
+        if(myObstacles[i].moveable){
+          if(myObstacles[i].moveRight){
+            if(myObstacles[i].x + myObstacles[i].width > window.innerWidth){
+              myObstacles[i].moveRight = false;
             }
+            myObstacles[i].x += 3;
+          } else {
+            if(myObstacles[i].x < 0){
+              myObstacles[i].moveRight = true;
+            }
+            myObstacles[i].x -= 3;
           }
         }
-        //Ser om spilleren har krasjet i objektet
-        if (myGamePiece.crashWith(myObstacles[i])) {
-          //Gjør slik at figuren ikke "flyr" opp, men må lande på platformen først. Finnes det en bedre måte?
+      }
 
-          //Ser at spilleren faller også blir det bedre flyt i spillet hvis det er 0.5
-          if(myGamePiece.speedY > 0.5 && myObstacles[i].broken == false){
+      //Ser om spilleren har krasjet i objektet
+      if (myGamePiece.crashWith(myObstacles[i])) {
+        //Gjør slik at figuren ikke "flyr" opp, men må lande på platformen først. Finnes det en bedre måte?
+        //Ser at spilleren faller også blir det bedre flyt i spillet hvis det er 0.5
+        if(myGamePiece.speedY > 0.5 && myObstacles[i].broken == false){
+          //Gjør slik at man ikke kan lande på en "gammel" platform
+          if(myGamePiece.onBlock < i){
 
-            if(myGamePiece.onBlock < i){
+            //Ser om platformen skal brekke
+            if(myObstacles[i].breakable){
+              myObstacles[i].image.src = "img/animasjoner/is_2.gif";
+              myObstacles[i].broken = true;
+            }
+            //Regner avstanden mellom den gammle blokken og den nye blokken
+            var heightGap = myObstacles[myGamePiece.onBlock].y - myObstacles[i].y;
 
-              //PLatform kan brekke i 2
-              if(myObstacles[i].breakable){
-                myObstacles[i].image.src = "img/animasjoner/is_2.gif";
-                myObstacles[i].broken = true;
-              }
+            //Animasjon for å flytte bakgrunnen og endre den
+            moveAnimation(gradientBackground, heightGap, 1);
+            zoomOutAnimation(vulcano, heightGap, 9500);
 
+            //Scoren endrer seg kun med avstanden fra den gamle platformen og den nye, slik at den ikke vokser evig
+            myScore.score += heightGap;
 
-
-
-              //alert("ny blokk");
-              var heightGap = myObstacles[myGamePiece.onBlock].y - myObstacles[i].y;
-
-              platformAnimation(gradientBackground, heightGap, 1);
-              zoomOutAnimation(vulcano, heightGap, 9500);
-              myScore.score += heightGap;
-
-              //Lager nye blokker, lager mellom 1 og 4? nye blokker
-              var newBlocks = 1;
-              //Kan endre størrelsen på blokkene
-              for(var b = 0; b < newBlocks; b++){
-                //Må lage fra bunnen av skjermen og oppover for at det ikke skal bli buggs med blokken den lander på og få skjermen opp
-
-                //Forskjellige type blokker
-                /*var blokkType = Math.floor(Math.random()*10);
-                if(blokkType == 9){
-                  myObstacles.push(new component(100, 20, "img/is.png", bPos[0], bPos[1], "image"));
-                } else {
-                  myObstacles.push(new component(100, 20, "img/block.gif", bPos[0], bPos[1], "image"));
-                }*/
+            //For å passe på at skjermen alltid er full
+            var fullScreen = false;
+            while(!fullScreen){
+              if(myObstacles[myObstacles.length-1].y > -200){
                 makePlatform();
-                //alert(bPos);
+              } else {
+                fullScreen = true;
               }
-
-              //For å passe på at skjermen alltid er full
-              var fullScreen = false;
-              while(!fullScreen){
-                if(myObstacles[myObstacles.length-1].y > -50){
-                  console.log("ikke fullskjerm");
-
-                  makePlatform();
-
-                } else {
-                  fullScreen = true;
-                }
-              }
-
-              //Flytter alle blokkene ned med høydeforskjellen mellom gamle og nye blokken
-              for(blokk of myObstacles){
-                platformAnimation(blokk, heightGap, 0);
-                //blokk.y += heightGap;
-                //Skrur ned farten hans så han ikke flyr opp når alle andre beveger seg ned Finnes det en bedre måte?
-              }
-              //myGamePiece.y += heightGap - 30;
-
-              myGamePiece.onBlock = i;
             }
-            if(!mute){
-              jumpSound.play();
-            }
-            myGamePiece.speedY = -13.2;
 
+            //Flytter alle blokkene ned med høydeforskjellen mellom gamle og nye blokken
+            for(blokk of myObstacles){
+              moveAnimation(blokk, heightGap, 0);
+            }
+            //Brukes på starten for å regne heightGap
+            myGamePiece.onBlock = i;
           }
+          if(!mute){
+            jumpSound.play();
+          }
+          //Starter ett nytt hopp
+          myGamePiece.speedY = -13.2;
         }
+      }
     }
     myGameArea.clear();
     myGameArea.frameNo += 1;
+
+    //Alle updatene passer på at den variablene blir tegnet
 
     if(myScore.score > 30000){
       spaceBackground.update();
@@ -430,6 +384,7 @@ function updateGameArea() {
     myGamePiece.newPos();
     myGamePiece.update();
     mySound.update();
+    //Lager en svart gjennomsiktig backgrunn når pauset
     if(paused){
       myGameArea.context.fillStyle = "rgba(0, 0, 0, 0.5)";
       myGameArea.context.fillRect(0, 0, window.innerWidth, window.innerHeight);
@@ -440,8 +395,6 @@ function updateGameArea() {
       pauseMenu.y = window.innerHeight / 2 - 15;
       pauseMenu.update();
     }
-
-
 }
 
 function makePlatform(){
@@ -457,19 +410,15 @@ function makePlatform(){
     moveable = true;
   }
 
+  //Endrer hvilke platformer som blir laget utifra scoren
   if(myScore.score < 10000){
     myObstacles.push(new component(100, 20, "img/lava.gif", bPos[0], bPos[1], "image"));
   } else if (myScore.score > 10000 && myScore.score < 20000){
-      myObstacles.push(new component(100, 20, "img/block.gif", bPos[0], bPos[1], "image", false, moveable));
-      spawnClouds();
+    myObstacles.push(new component(100, 20, "img/block.gif", bPos[0], bPos[1], "image", false, moveable));
+    spawnClouds();
   } else {
       myObstacles.push(new component(100, 30, "img/is.gif", bPos[0], bPos[1], "image", breakable, moveable));
   }
-}
-
-function everyinterval(n) {
-    if ((myGameArea.frameNo / n) % 1 == 0) {return true;}
-    return false;
 }
 
 function calculateBlock(start){
@@ -481,29 +430,18 @@ function calculateBlock(start){
   //For å se om det er mulig å lande på den og at den er på banen
   do{
 
-    //Tilfeldig enn så lenge
-    var posX = Math.floor(Math.random() * window.innerWidth);
+    //Tilfeldig enn så lenge, men kan ikke bli lagd i veggene
+    var posX = Math.floor(Math.random() * window.innerWidth - 100);
 
 
 
     // Slik at minste mellomrommet stiger jo høyre opp man kommer
     var posY = highestBlock.y - Math.floor(Math.random() * 90 + 30) + Math.floor(myScore.score / 7000);
+
     //Spilleren hopper 165 px oppover, regne ut det?
     //Hopper 375px til siden
-    /*console.log("S.x: " + myGamePiece.x + " S.y: " + (window.innerHeight-40) + " S.x + 375: " + (myGamePiece.x + 375) + " S.y: " + (window.innerHeight-40) +
-    " S.x: " + myGamePiece.x + " S.y - 165: " + (window.innerHeight-40-165));
-    console.log(posX + " " + posY);*/
-    /*
-    if(isInside(myGamePiece.x,(window.innerHeight-40),(myGamePiece.x+375),(window.innerHeight-40),myGamePiece.x,(window.innerHeight-40-165),posX,posY) ||
-      isInside(myGamePiece.x,(window.innerHeight-40),(myGamePiece.x-375),(window.innerHeight-40),myGamePiece.x,(window.innerHeight-40-165),posX,posY)){
-          console.log("true");
-          validPos = true;
-    } else {
-      posX = Math.floor(Math.random() * window.innerWidth + 50);
-      posY = highestBlock.y - Math.floor(Math.random() * 90 + 5);
-    }*/
 
-    //Fungerer helt ok
+    //Passer på at det alltid skal være mulig å lande på den nye platformen
     if((isInside(highestBlock.x,(highestBlock.y),(highestBlock.x+375),(highestBlock.y),highestBlock.x,(highestBlock.y-165),posX,posY) ||
       isInside(highestBlock.x,(highestBlock.y),(highestBlock.x-375),(highestBlock.y),highestBlock.x,(highestBlock.y-165),posX,posY)) &&
       posY + 165 > highestBlock.y){
@@ -517,47 +455,12 @@ function calculateBlock(start){
     }
   }while(!validPos);
 
-
-
-
-
-
   pos = [posX, posY];
-  /*var pos = [0, 0];
-  //alert("Making block");
-  //Må finne forrige block og gi ny y verdi som er lavere enn forrige og bruke pytagoras for å se om det er mulig
-  var lastBlock = myObstacles[myObstacles.length - 1];
 
-    //Hopper vanligvis 235 pixler opp også kan han hoppe 300 px sidelengs
-    //Å Gjøre Bedre måte å finne ut dette på
-    //Brukes pytagoras a^2 = b^2 + c^2 for å ikke ta den nye blokken for langt til siden
-  var maxToSide = Math.sqrt(300*300-235*235);
-  var xToSide = Math.floor(Math.random()*maxToSide) + 50;
-  var plussOrMinus = Math.floor(Math.random()*2);
-  if(plussOrMinus == 1){
-    xToSide = -xToSide;
-  }
-  var blockXPos = lastBlock.x + xToSide;
-  //Første blokken har x = 0 så må rette det opp sånn
-  if(myObstacles.length == 1){
-    blockXPos = window.innerWidth/2 + xToSide;
-  }
-//Å gjøre ikke gå for langt ut på sidene utenfor bildet
-
-  if(start){
-    // -10 Gjør slik den nye blokken ikke blir lagd oppå den gamle
-    var blockYPos = lastBlock.y - 10 - Math.floor(Math.random() * 150);
-  }
-  //Å Gjøre bedre måte å gjøre det på
-  else {
-    var blockYPos = lastBlock.y - 10 - Math.floor(Math.random() * 100);
-  }
-  //alert(blockYPos);
-  pos = [blockXPos, blockYPos];
-  return pos;*/
   return pos;
 }
 
+//For å lage nye platformer
 // vil respektivt være spiller.x, spiller.y, spiller.x, spiller.y + 165, spiller.x + 365, spiller.y, punkt.x, punkt.y
 function isInside(x1,y1,x2,y2,x3,y3,x,y){
   var A = area(x1,y1,x2,y2,x3,y3);
@@ -572,7 +475,7 @@ function area(x1,y1,x2,y2,x3,y3){
   return Math.abs((x1*(y2-y3) + x2*(y3-y1)+x3*(y1-y2))/2.0);
 }
 
-function platformAnimation(platform, heightGap, isBackground){
+function moveAnimation(platform, heightGap, isBackground){
   var heightChange = 0;
   var id = setInterval(frame, 10);
   function frame(){
@@ -591,7 +494,6 @@ function platformAnimation(platform, heightGap, isBackground){
   }
 }
 
-//Hvilke score skal det være når vulkanene forsvinner
 function zoomOutAnimation(obj, heightGap, scoreDisapear){
   if(myScore.score > scoreDisapear){
     var id = setInterval(disapear, 10);
@@ -656,7 +558,6 @@ function sound(src, volume){
   }
 }
 
-
 function restartGame(){
   myGamePiece = [];
   myObstacles = [];
@@ -665,7 +566,7 @@ function restartGame(){
   startGame();
 }
 
-
+//BRUKES IKKE VIL DEN FUNKE?
 function checkHighscore(){
   var returnScore = myScore.score;
   var newHigh = true;
@@ -684,8 +585,9 @@ function checkHighscore(){
   return [newHigh, returnScore];
 }
 
+// For mobil og nettbrett
 function touchstart(evt){
-  //Ser om trykket er på høyre side av skjermen
+  //Ser om trykket er på høyre eller venstre side av skjermen
   if(evt.touches[0].clientX > window.innerWidth/2){
     touch = [true, false];
   } else if (evt.touches[0].clientX < window.innerWidth/2){
@@ -693,6 +595,7 @@ function touchstart(evt){
   }
 }
 
+// For mobil og nettbrett, oppdateres når fingeren flytter seg
 function touchmove(evt){
   if(evt.touches[0].clientX > window.innerWidth/2){
     touch = [true, false];
@@ -701,9 +604,11 @@ function touchmove(evt){
   }
 }
 
+//Når man ikke trykker lenger
 function touchend(evt){
   touch = [false, false];
 }
+
 /*
 //Brukes til debugging
 function printMousePos(event) {
@@ -715,7 +620,6 @@ function printMousePos(event) {
       " - clientY: " + event.clientY);
   }
 }
-
 document.addEventListener("click", printMousePos);*/
 
 </script>
