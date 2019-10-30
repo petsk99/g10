@@ -1,31 +1,717 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
-  <head>
-    <meta charset="utf-8" />
-    <title>Jump To Save Humanity</title>
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0"
-      media="screen"
-    />
-    <style>@import url('https://fonts.googleapis.com/css?family=Press+Start+2P&display=swap');
-    </style>
-    <title></title>
-    <body id="bakgrunn"></body>
-  </head>
-  <body><span style="font-family: 'Lobster', cursive;">&nbsp;</span>
-<canvas id=c width=500 height=500></canvas>
-  </body>
-  <script>
-var ctx = document.getElementById('c').getContext('2d');
-var kitty = new Image();
-kitty.src = 'http://i954.photobucket.com/albums/ae30/rte148/891blog_keyboard_cat.gif';
-kitty.onload = function(){
-  ctx.drawImage(this, 0,0,this.width, this.height);
-  ctx.font         = '68px Press Start 2P';
-  ctx.fillStyle = 'orangered';
-  ctx.textBaseline = 'top';
-  ctx.fillText  ('Keyboard Cat', 0, 270);
-};
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8"/>
+<title>Jump save humanity</title>
+<link rel="shortcut icon" type="image/x-icon" href="img/player_s.gif" />
+
+
+<style>
+
+/* Implementerer pixel font */
+@font-face {
+  font-family: 'PressStart2P';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Press Start 2P Regular'), local('PressStart2P-Regular'), url(https://fonts.gstatic.com/s/pressstart2p/v8/e3t4euO8T-267oIAQAu6jDQyK3nYivN04w.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* latin */
+@font-face {
+  font-family: 'PressStart2P';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Press Start 2P Regular'), local('PressStart2P-Regular'), url(https://fonts.gstatic.com/s/pressstart2p/v8/e3t4euO8T-267oIAQAu6jDQyK3nVivM.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+body {
+  margin: 0;
+}
+
+canvas {
+    border:1px solid #d3d3d3;
+    /*background-color: #add8e6 ;*/
+}
+/* Fjerner muligheten til å scolle på siden så canvasen dekker hele */
+html, body {margin: 0; height: 100%; overflow: hidden}
+</style>
+</head>
+<body onload="startGame()">
+<script>
+
+//Spilleren
+var myGamePiece;
+//Blokkene den lander på
+var myObstacles = [];
+
+var clouds = [];
+//Scoren
+var myScore;
+
+var mySound;
+var jumpSound;
+var backgroundMusic;
+
+var gradientBackground;
+var vulcano;
+
+//Google chrome lar først musikk starte etter at brukeren har gjort noe på nettsiden så lyden kan først spilles etter brukeren har gått til siden
+//https://stackoverflow.com/questions/53775957/playing-audio-file-returns-uncaught-in-promise-but-works-in-console
+var musicStarted = false;
+var mute = false;
+var paused = false;
+var pauseMenu;
+
+var deadFacts = [
+  "Gjennomsnittlig dyrelivbestand har sunket med 60 prosent på drøyt 40 år",
+  "Det er mer karbondioksid i atmosfæren vår nå enn noen gang i menneskets historie",
+  "To tredjedeler av ekstremværhendelser de siste 20 årene har vært påvirket av mennesker",
+  "120 000 kvadratkilometer tropisk skog gikk tapt i 2018",
+  "Tiner eller smelter permafrosten? Akkurat som et frossent brød, vil permafrosten tine",
+  "Siden fisk som torsken trenger en veldig spesifikk temperatur for å kunne gyte, vil den økende temperaturen i havet gjøre at torsken flykter nordover og vekk fra det norske hav",
+  "Hvis man stoppet alt av klimagassutslipp ville det fortsatt skje klimaendringer, siden karbondioksid levealder i atmosfæren er 12 år og metan mye lengre",
+  "Før den industrielle revolusjon var verden på vei mot en ny istid, men de enorme mengdene klimautslipp som kom med revolusjon skjøt den globale lufttemperaturen i været"
+];
+
+var restart = false;
+
+//Parameterne er: omTrykket, venstre | hvis den ikke går venstre går den høyre
+var touch = [false, false];
+
+function startGame() {
+    gradientBackground = new component(window.innerWidth, 30000, "img/background.png", 0, -30000+window.innerHeight, "image");
+    vulcano = new component(window.innerWidth, 300, "img/vulcano.png", 0, window.innerHeight-300, "image");
+    //Lager figuren og plasserer han i midten lavt nede
+    myGamePiece = new component(30, 60, "img/player_s.gif", window.innerWidth/2-15, window.innerHeight-280, "image");
+    mySound = new component(40, 32, "img/sound_on.png", 10, window.innerHeight-40, "image");
+
+    //Start blokken som han starter oppå
+    //Å Gjøre endre størrelse utifra skjermstørrelse
+    myObstacles.push(new component(window.innerWidth, 40, "img/BakkenLava.gif", 0, window.innerHeight-40, "image"));
+
+    //Setter gravitasjonen i spiller med hvor for han "Går ned"
+    myGamePiece.gravity = 0.5;
+    //Viser scoren
+    myScore = new component("23px", "PressStart2P", "black", 20, 40, "text");
+    pauseMenu = new component("30px", "PressStart2P", "white", window.innerWidth/2, window.innerHeight/2, "text");
+
+    //CURRENTLY 0 pga irriterende
+    jumpSound = new sound("sounds/jump.wav", 0); //.4
+    backgroundMusic = new sound("sounds/background.mp3", 0); //1
+
+    //Starter med nok blokker
+    var startBlokker = Math.floor(Math.random()*4+3);
+    var oldH = window.innerHeight-20;
+    var pleased = false;
+    while(!pleased){
+      for(var b = 0; b < startBlokker; b++){
+        //Må lage fra bunnen av skjermen og oppover for at det ikke skal bli buggs med blokken den lander på og få skjermen opp
+        //Parameterne fra bPos er x, y
+        var bPos = calculateBlock(true);
+        //alert(bPos);
+        myObstacles.push(new component(100, 20, "img/lava.gif", bPos[0], bPos[1], "image"));
+      }
+      //Denne passer på at hele skjermen blir fylt
+      if(myObstacles[myObstacles.length-1].y > 150){
+        pleased = false;
+        startBlokker = 1;
+      } else {
+        pleased = true;
+      }
+    }
+    //Starter spiller, hvis vi kjører denne hver gang blir spillet raskere og raskere vi ønsker en konstant fart
+    if(!restart)
+      myGameArea.start();
+}
+//Er en object
+var myGameArea = {
+    //Lager hvis spillet skjer
+    canvas : document.createElement("canvas"),
+
+    start : function() {
+      //Å Gjøre Få den til å oppdatere canvas størrelsen når man endrer på skjerm størrelsen
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+        this.context = this.canvas.getContext("2d");
+        document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+        this.frameNo = 0;
+        this.score = 0;
+        this.interval = setInterval(updateGameArea, 20);
+
+        if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
+         window.addEventListener("touchstart", touchstart);
+         window.addEventListener("toucmove", touchmove);
+         window.addEventListener("touchend", touchend);
+       } else {
+         console.log("PC");
+       }
+       window.addEventListener('mousedown', function (e){
+         if(e.clientX > 5 && e.clientX < 50 && e.clientY < window.innerHeight && e.clientY > window.innerHeight-40){
+           if(mute){
+             mute = false;
+             mySound.image.src="img/sound_on.png";
+             backgroundMusic.play();
+           } else {
+             mute = true;
+             mySound.image.src="img/sound_off.png";
+             backgroundMusic.stop();
+           }
+         }
+       })
+        //Ser hvilke knapper som blir tastet
+        window.addEventListener('keydown', function (e) {
+            myGameArea.key = e.keyCode;
+        })
+        window.addEventListener('keyup', function (e) {
+          if ((myGameArea.key && myGameArea.key == 27)) {
+            paused = !paused;
+          }
+            myGameArea.key = false;
+        })
+        },
+
+    clear : function() {
+        //Fjerner alle tingene på skjermen, også blir de tegnet på nytt
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+}
+
+function component(width, height, src, x, y, type, breakable = false, moveable = false) {
+    this.type = type;
+    if(this.type == "image"){
+      this.image = new Image();
+      this.image.src = src;
+    }
+    this.score = 0;
+    this.width = width;
+    this.height = height;
+    this.speedX = 0;
+    this.speedY = 0;
+    this.x = x;
+    this.y = y;
+    this.heightChange = 0;
+    this.breakable = breakable;
+    this.moveable = moveable;
+    this.moveRight = true;
+    this.broken = false;
+    this.gravity = 0;
+    this.onBlock = 0;
+    this.update = function() {
+        ctx = myGameArea.context;
+        if (this.type == "text") {
+            ctx.font = this.width + " " + this.height;
+            ctx.fillStyle = src;
+            ctx.fillText(this.text, this.x, this.y);
+        } else if(type == "image"){
+          ctx.drawImage(this.image,
+          this.x,
+          this.y,
+          this.width, this.height);
+        } else {
+            ctx.fillStyle = src;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
+    }
+    this.newPos = function() {
+      if(!paused){
+        this.speedY += this.gravity;
+          //Får hvilke tast det er fra https://keycode.info/
+        //Å gjøre: Få farten til å være relativ til størrelsen på skjermen
+
+        if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
+          if(touch[0] && touch[1]){
+            //alert("venstre");
+            this.speedX = -7; myGamePiece.image.src="img/player_l.gif";
+          } else if(touch[0] && !touch[1]){
+            //alert("høyre");
+            this.speedX = 7; myGamePiece.image.src="img/player_r.gif";
+          } else {
+            this.speedX = 0;myGamePiece.image.src="img/player_s.gif";
+          }
+        } else {
+          if ((myGameArea.key && myGameArea.key == 37)) {this.speedX = -7; myGamePiece.image.src="img/player_l.gif";} /* Bevger seg til VENSTRE */
+          else if ((myGameArea.key && myGameArea.key == 39)) {this.speedX = 7; myGamePiece.image.src="img/player_r.gif";} /* Beveger seg til HØYRE */
+          else {this.speedX = 0; myGamePiece.image.src="img/player_s.gif";} /* Hvis ingen av tastene blir trykt står den stille */
+        }
+        if(myGameArea.key && musicStarted == false){
+          backgroundMusic.play();
+          musicStarted = true;
+        }
+        this.x += this.speedX;
+        this.y += this.speedY;
+        this.hitBottom();
+        this.hitRight();
+        this.hitLeft();
+      }
+    }
+    //Når den treffer høyre side
+    this.hitRight = function(){
+      var rightSide = myGameArea.canvas.width - this.width;
+      if(this.x > rightSide){
+        //alert("Right");
+        this.speedX = 0;
+        this.x = rightSide;
+      }
+    }
+    //Når den treffer venstre side
+    this.hitLeft = function(){
+      var leftSide = 0;
+      if(this.x < leftSide){
+        this.speedX = 0;
+        this.x = leftSide;
+      }
+    }
+    //Når den treffer bakken
+    this.hitBottom = function() {
+        var rockbottom = myGameArea.canvas.height - this.height;
+        if (this.y > rockbottom) {
+            //De traff bunnen så de har tapt
+            /*if(document.cookie != ""){
+              var newHigh = checkHighscore();
+              if(newHigh[0]){
+                alert("Ny highscore: " + myScore.score+"\n"+deadFacts[Math.floor(Math.random()*deadFacts.length)]);
+              } else {
+                alert("Din score ble: " + myScore.score+"\nHighscoren er på: "+newHigh[1]+"\n"+deadFacts[Math.floor(Math.random()*deadFacts.length)]);
+              }
+            } else {*/
+
+            this.y = -200;
+            this.speedY = 0;
+            this.speedX = 0;
+            //Fjerne?
+            alert("Din score ble: " + myScore.score+"\nViste du at: "+deadFacts[Math.floor(Math.random()*deadFacts.length)]);
+              /*document.cookie = "highscore="+myScore.score;
+            }*/
+
+
+            //alert("dead");
+
+            restartGame();
+        }
+    }
+    this.crashWith = function(otherobj) {
+
+        var pRigth = otherobj.x + (otherobj.width);
+        var pLeft = otherobj.x;
+        var pTop = otherobj.y;
+        var pBottom = otherobj.y + (otherobj.height);
+        //this er spilleren
+        var cRight = this.x + (this.width);
+        var cLeft = this.x;
+        var cBottom = this.y + (this.height);
+        //Har ikke med chacter sitt hode så cTop er ikke med. Ettersom at vi ønsker at han kun kan hoppe med benene sine
+        var crash = false;
+
+        if(((pLeft < cRight) && (pRigth > cLeft) && (pBottom > cBottom) && (pTop < cBottom))){
+          crash = true;
+        }
+
+        return crash;
+
+    }
+}
+
+function updateGameArea() {
+    var x, y, height, gap, minWidth, maxWidth;
+
+    for (i = 0; i < myObstacles.length; i += 1) {
+        if(!paused){
+          if(myObstacles[i].moveable){
+            if(myObstacles[i].moveRight){
+              if(myObstacles[i].x + myObstacles[i].width > window.innerWidth){
+                myObstacles[i].moveRight = false;
+              }
+              myObstacles[i].x += 3;
+            } else {
+              if(myObstacles[i].x < 0){
+                myObstacles[i].moveRight = true;
+              }
+              myObstacles[i].x -= 3;
+            }
+          }
+        }
+        //Ser om spilleren har krasjet i objektet
+        if (myGamePiece.crashWith(myObstacles[i])) {
+          //Gjør slik at figuren ikke "flyr" opp, men må lande på platformen først. Finnes det en bedre måte?
+
+          //Ser at spilleren faller også blir det bedre flyt i spillet hvis det er 0.5
+          if(myGamePiece.speedY > 0.5 && myObstacles[i].broken == false){
+
+            if(myGamePiece.onBlock < i){
+
+              //PLatform kan brekke i 2
+              if(myObstacles[i].breakable){
+                myObstacles[i].image.src = "img/animasjoner/is_2.gif";
+                myObstacles[i].broken = true;
+              }
+
+
+
+
+              //alert("ny blokk");
+              var heightGap = myObstacles[myGamePiece.onBlock].y - myObstacles[i].y;
+
+              platformAnimation(gradientBackground, heightGap, 1);
+              zoomOutAnimation(vulcano, heightGap, 9500);
+              myScore.score += heightGap;
+
+              //Lager nye blokker, lager mellom 1 og 4? nye blokker
+              var newBlocks = 1;
+              //Kan endre størrelsen på blokkene
+              for(var b = 0; b < newBlocks; b++){
+                //Må lage fra bunnen av skjermen og oppover for at det ikke skal bli buggs med blokken den lander på og få skjermen opp
+
+                //Forskjellige type blokker
+                /*var blokkType = Math.floor(Math.random()*10);
+                if(blokkType == 9){
+                  myObstacles.push(new component(100, 20, "img/is.png", bPos[0], bPos[1], "image"));
+                } else {
+                  myObstacles.push(new component(100, 20, "img/block.gif", bPos[0], bPos[1], "image"));
+                }*/
+                makePlatform();
+                //alert(bPos);
+              }
+
+              //For å passe på at skjermen alltid er full
+              var fullScreen = false;
+              while(!fullScreen){
+                if(myObstacles[myObstacles.length-1].y > -50){
+                  console.log("ikke fullskjerm");
+
+                  makePlatform();
+
+                } else {
+                  fullScreen = true;
+                }
+              }
+
+              //Flytter alle blokkene ned med høydeforskjellen mellom gamle og nye blokken
+              for(blokk of myObstacles){
+                platformAnimation(blokk, heightGap, 0);
+                //blokk.y += heightGap;
+                //Skrur ned farten hans så han ikke flyr opp når alle andre beveger seg ned Finnes det en bedre måte?
+              }
+              //myGamePiece.y += heightGap - 30;
+
+              myGamePiece.onBlock = i;
+            }
+            if(!mute){
+              jumpSound.play();
+            }
+            myGamePiece.speedY = -13.2;
+
+          }
+        }
+    }
+    myGameArea.clear();
+    myGameArea.frameNo += 1;
+
+    gradientBackground.update();
+    vulcano.update();
+
+    for (i = 0; i < clouds.length; i += 1) {
+        clouds[i].update();
+    }
+    for (i = 0; i < myObstacles.length; i += 1) {
+        myObstacles[i].update();
+    }
+    myScore.text="SCORE: " + myScore.score;
+    myScore.update();
+    myGamePiece.newPos();
+    myGamePiece.update();
+    mySound.update();
+    if(paused){
+      myGameArea.context.fillStyle = "rgba(0, 0, 0, 0.5)";
+      myGameArea.context.fillRect(0, 0, window.innerWidth, window.innerHeight);
+      myGameArea.context.font = "PressStart2P";
+      myGameArea.context.fontSize = "30px";
+      pauseMenu.text = "PAUSED";
+      pauseMenu.x = window.innerWidth / 2 - myGameArea.context.measureText(pauseMenu.text).width / 2 - 15;
+      pauseMenu.y = window.innerHeight / 2 - 15;
+      pauseMenu.update();
+    }
+
+
+}
+
+function makePlatform(){
+  var bPos = calculateBlock(false);
+  var moveable = false;
+  var breakable = false;
+
+  if(Math.floor(Math.random()*10) == 9){
+    breakable = true;
+  }
+
+  if(Math.floor(Math.random()*10) > 7){
+    moveable = true;
+  }
+
+  if(myScore.score < 10000){
+    myObstacles.push(new component(100, 20, "img/lava.gif", bPos[0], bPos[1], "image"));
+  } else if (myScore.score > 10000 && myScore.score < 20000){
+      myObstacles.push(new component(100, 20, "img/block.gif", bPos[0], bPos[1], "image", false, moveable));
+      spawnClouds();
+  } else {
+      myObstacles.push(new component(100, 30, "img/is.gif", bPos[0], bPos[1], "image", breakable, moveable));
+  }
+}
+
+function everyinterval(n) {
+    if ((myGameArea.frameNo / n) % 1 == 0) {return true;}
+    return false;
+}
+
+function calculateBlock(start){
+  var pos = [0,0];
+
+  var highestBlock = myObstacles[myObstacles.length - 1];
+
+  var validPos = false;
+  //For å se om det er mulig å lande på den og at den er på banen
+  do{
+
+    //Tilfeldig enn så lenge
+    var posX = Math.floor(Math.random() * window.innerWidth);
+
+
+
+    // Slik at minste mellomrommet stiger jo høyre opp man kommer
+    var posY = highestBlock.y - Math.floor(Math.random() * 90 + 30) + Math.floor(myScore.score / 7000);
+    //Spilleren hopper 165 px oppover, regne ut det?
+    //Hopper 375px til siden
+    /*console.log("S.x: " + myGamePiece.x + " S.y: " + (window.innerHeight-40) + " S.x + 375: " + (myGamePiece.x + 375) + " S.y: " + (window.innerHeight-40) +
+    " S.x: " + myGamePiece.x + " S.y - 165: " + (window.innerHeight-40-165));
+    console.log(posX + " " + posY);*/
+    /*
+    if(isInside(myGamePiece.x,(window.innerHeight-40),(myGamePiece.x+375),(window.innerHeight-40),myGamePiece.x,(window.innerHeight-40-165),posX,posY) ||
+      isInside(myGamePiece.x,(window.innerHeight-40),(myGamePiece.x-375),(window.innerHeight-40),myGamePiece.x,(window.innerHeight-40-165),posX,posY)){
+          console.log("true");
+          validPos = true;
+    } else {
+      posX = Math.floor(Math.random() * window.innerWidth + 50);
+      posY = highestBlock.y - Math.floor(Math.random() * 90 + 5);
+    }*/
+
+    //Fungerer helt ok
+    if((isInside(highestBlock.x,(highestBlock.y),(highestBlock.x+375),(highestBlock.y),highestBlock.x,(highestBlock.y-165),posX,posY) ||
+      isInside(highestBlock.x,(highestBlock.y),(highestBlock.x-375),(highestBlock.y),highestBlock.x,(highestBlock.y-165),posX,posY)) &&
+      posY + 165 > highestBlock.y){
+          validPos = true;
+    } else {
+      do{
+        var posX = Math.floor(Math.random() * window.innerWidth);
+      } while (posX + 50 < highestBlock.x + 50 && posX > highestBlock.x - 50);
+      posY = highestBlock.y - Math.floor(Math.random() * 90 + 30) + Math.floor(myScore.score / 7000);
+
+    }
+  }while(!validPos);
+
+
+
+
+
+
+  pos = [posX, posY];
+  /*var pos = [0, 0];
+  //alert("Making block");
+  //Må finne forrige block og gi ny y verdi som er lavere enn forrige og bruke pytagoras for å se om det er mulig
+  var lastBlock = myObstacles[myObstacles.length - 1];
+
+    //Hopper vanligvis 235 pixler opp også kan han hoppe 300 px sidelengs
+    //Å Gjøre Bedre måte å finne ut dette på
+    //Brukes pytagoras a^2 = b^2 + c^2 for å ikke ta den nye blokken for langt til siden
+  var maxToSide = Math.sqrt(300*300-235*235);
+  var xToSide = Math.floor(Math.random()*maxToSide) + 50;
+  var plussOrMinus = Math.floor(Math.random()*2);
+  if(plussOrMinus == 1){
+    xToSide = -xToSide;
+  }
+  var blockXPos = lastBlock.x + xToSide;
+  //Første blokken har x = 0 så må rette det opp sånn
+  if(myObstacles.length == 1){
+    blockXPos = window.innerWidth/2 + xToSide;
+  }
+//Å gjøre ikke gå for langt ut på sidene utenfor bildet
+
+  if(start){
+    // -10 Gjør slik den nye blokken ikke blir lagd oppå den gamle
+    var blockYPos = lastBlock.y - 10 - Math.floor(Math.random() * 150);
+  }
+  //Å Gjøre bedre måte å gjøre det på
+  else {
+    var blockYPos = lastBlock.y - 10 - Math.floor(Math.random() * 100);
+  }
+  //alert(blockYPos);
+  pos = [blockXPos, blockYPos];
+  return pos;*/
+  return pos;
+}
+
+// vil respektivt være spiller.x, spiller.y, spiller.x, spiller.y + 165, spiller.x + 365, spiller.y, punkt.x, punkt.y
+function isInside(x1,y1,x2,y2,x3,y3,x,y){
+  var A = area(x1,y1,x2,y2,x3,y3);
+  var A1 = area(x,y,x2,y2,x3,y3);
+  var A2 = area(x1,y1,x,y,x3,y3);
+  var A3 = area(x1,y1,x2,y2,x,y);
+  //console.log("A: " + A + " A1: " + A1 + " A2: " + A2 + " A3: " + A3);
+  return(A == A1 + A2 + A3);
+}
+//https://www.geeksforgeeks.org/check-whether-a-given-point-lies-inside-a-triangle-or-not/
+function area(x1,y1,x2,y2,x3,y3){
+  return Math.abs((x1*(y2-y3) + x2*(y3-y1)+x3*(y1-y2))/2.0);
+}
+
+function platformAnimation(platform, heightGap, isBackground){
+  var heightChange = 0;
+  var id = setInterval(frame, 10);
+  function frame(){
+    if(heightChange >= heightGap){
+      clearInterval(id);
+    } else {
+      if(paused){}
+      else if(isBackground){
+        platform.y += 1;
+        heightChange += 1;
+      } else {
+        platform.y += 2;
+        heightChange += 2;
+      }
+    }
+  }
+}
+
+//Hvilke score skal det være når vulkanene forsvinner
+function zoomOutAnimation(obj, heightGap, scoreDisapear){
+  if(myScore.score > scoreDisapear){
+    var id = setInterval(disapear, 10);
+    function disapear(){
+      if(obj.width <= 0){
+        clearInterval(id);
+      } else {
+        obj.width -= 0.3;
+        obj.height -= 0.3/4;
+        obj.x += 0.3/2;
+        obj.y = window.innerHeight - obj.height;
+      }
+    }
+  } else {
+    var toChange = heightGap / scoreDisapear * obj.width;
+    var widthChanged = 0;
+    var id = setInterval(frame, 10);
+    function frame(){
+      if(widthChanged >= toChange){
+        clearInterval(id);
+      } else {
+        if(paused){}
+        else {
+          obj.width -= 0.3;
+          obj.height -= 0.3/4;
+          obj.x += 0.3/2;
+          obj.y = window.innerHeight - obj.height;
+          widthChanged += 0.3;
+        }
+      }
+    }
+  }
+}
+
+function spawnClouds(){
+
+}
+
+
+function sound(src, volume){
+  this.sound = document.createElement("audio");
+  this.sound.src = src;
+  this.sound.setAttribute("preload", "auto");
+  this.sound.setAttribute("controls", "none");
+  this.sound.volume = volume/100;
+  this.sound.style.display = "none";
+  document.body.appendChild(this.sound);
+  this.play = function(){
+    try{
+      this.sound.play();
+    }
+    catch(err){
+      console.logError("Playing sound: " + err);
+    }
+  }
+  this.stop = function(){
+    this.sound.pause();
+  }
+  this.load = function(){
+    this.sound.load();
+  }
+}
+
+
+function restartGame(){
+  myGamePiece = [];
+  myObstacles = [];
+  myScore = [];
+  restart = true;
+  startGame();
+}
+
+
+function checkHighscore(){
+  var returnScore = myScore.score;
+  var newHigh = true;
+  var highscore = getCookie("highscore");
+  alert(document.cookie);
+  if(highscore != ""){
+    var cookieScore = parseInt(highscore);
+    if(cookieScore > returnScore){
+      newHigh = false;
+      returnScore = cookieScore;
+    }
+  }
+  if(newHigh){
+    document.cookie = "highscore="+returnScore+";";
+  }
+  return [newHigh, returnScore];
+}
+
+function touchstart(evt){
+  //Ser om trykket er på høyre side av skjermen
+  if(evt.touches[0].clientX > window.innerWidth/2){
+    touch = [true, false];
+  } else if (evt.touches[0].clientX < window.innerWidth/2){
+    touch = [true, true];
+  }
+}
+
+function touchmove(evt){
+  if(evt.touches[0].clientX > window.innerWidth/2){
+    touch = [true, false];
+  } else if (evt.touches[0].clientX < window.innerWidth/2){
+    touch = [true, true];
+  }
+}
+
+function touchend(evt){
+  touch = [false, false];
+}
+/*
+//Brukes til debugging
+function printMousePos(event) {
+
+  if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
+
+  } else {
+    alert("clientX: " + event.clientX +
+      " - clientY: " + event.clientY);
+  }
+}
+
+document.addEventListener("click", printMousePos);*/
+
 </script>
+<br>
+</body>
 </html>

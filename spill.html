@@ -47,6 +47,8 @@ html, body {margin: 0; height: 100%; overflow: hidden}
 var myGamePiece;
 //Blokkene den lander på
 var myObstacles = [];
+
+var clouds = [];
 //Scoren
 var myScore;
 
@@ -54,7 +56,10 @@ var mySound;
 var jumpSound;
 var backgroundMusic;
 
-var background;
+var gradientBackground;
+var vulcano;
+var spaceBackground;
+
 //Google chrome lar først musikk starte etter at brukeren har gjort noe på nettsiden så lyden kan først spilles etter brukeren har gått til siden
 //https://stackoverflow.com/questions/53775957/playing-audio-file-returns-uncaught-in-promise-but-works-in-console
 var musicStarted = false;
@@ -79,7 +84,9 @@ var restart = false;
 var touch = [false, false];
 
 function startGame() {
-    background = new component(window.innerWidth, 5000, "img/background.png", 0, -5000+window.innerHeight, "image");
+    gradientBackground = new component(window.innerWidth, 30000, "img/background.png", 0, -30000+window.innerHeight, "image");
+    vulcano = new component(window.innerWidth, 300, "img/vulcano.png", 0, window.innerHeight-300, "image");
+    spaceBackground = new component(window.innerWidth, window.innerHeight, "img/space.png", 0, 0, "image");
     //Lager figuren og plasserer han i midten lavt nede
     myGamePiece = new component(30, 60, "img/player_s.gif", window.innerWidth/2-15, window.innerHeight-280, "image");
     mySound = new component(40, 32, "img/sound_on.png", 10, window.innerHeight-40, "image");
@@ -93,8 +100,10 @@ function startGame() {
     //Viser scoren
     myScore = new component("23px", "PressStart2P", "black", 20, 40, "text");
     pauseMenu = new component("30px", "PressStart2P", "white", window.innerWidth/2, window.innerHeight/2, "text");
-    jumpSound = new sound("sounds/jump.wav", 0.4);
-    backgroundMusic = new sound("sounds/background.mp3", 1);
+
+    //CURRENTLY 0 pga irriterende
+    jumpSound = new sound("sounds/jump.wav", 0); //.4
+    backgroundMusic = new sound("sounds/background.mp3", 0); //1
 
     //Starter med nok blokker
     var startBlokker = Math.floor(Math.random()*4+3);
@@ -348,7 +357,8 @@ function updateGameArea() {
               //alert("ny blokk");
               var heightGap = myObstacles[myGamePiece.onBlock].y - myObstacles[i].y;
 
-              platformAnimation(background, heightGap, 1);
+              platformAnimation(gradientBackground, heightGap, 1);
+              zoomOutAnimation(vulcano, heightGap, 9500);
               myScore.score += heightGap;
 
               //Lager nye blokker, lager mellom 1 og 4? nye blokker
@@ -401,10 +411,18 @@ function updateGameArea() {
     }
     myGameArea.clear();
     myGameArea.frameNo += 1;
-    background.update();
+
+    if(myScore.score > 30000){
+      spaceBackground.update();
+    } else {
+      gradientBackground.update();
+      vulcano.update();
+    }
+
+    for (i = 0; i < clouds.length; i += 1) {
+        clouds[i].update();
+    }
     for (i = 0; i < myObstacles.length; i += 1) {
-        //Flytter objektet
-        //myObstacles[i].y += 1;
         myObstacles[i].update();
     }
     myScore.text="SCORE: " + myScore.score;
@@ -439,10 +457,11 @@ function makePlatform(){
     moveable = true;
   }
 
-  if(myScore.score < 7500){
+  if(myScore.score < 10000){
     myObstacles.push(new component(100, 20, "img/lava.gif", bPos[0], bPos[1], "image"));
-  } else if (myScore.score > 7500 && myScore.score < 15000){
+  } else if (myScore.score > 10000 && myScore.score < 20000){
       myObstacles.push(new component(100, 20, "img/block.gif", bPos[0], bPos[1], "image", false, moveable));
+      spawnClouds();
   } else {
       myObstacles.push(new component(100, 30, "img/is.gif", bPos[0], bPos[1], "image", breakable, moveable));
   }
@@ -572,6 +591,46 @@ function platformAnimation(platform, heightGap, isBackground){
   }
 }
 
+//Hvilke score skal det være når vulkanene forsvinner
+function zoomOutAnimation(obj, heightGap, scoreDisapear){
+  if(myScore.score > scoreDisapear){
+    var id = setInterval(disapear, 10);
+    function disapear(){
+      if(obj.width <= 0){
+        clearInterval(id);
+      } else {
+        obj.width -= 0.3;
+        obj.height -= 0.3/4;
+        obj.x += 0.3/2;
+        obj.y = window.innerHeight - obj.height;
+      }
+    }
+  } else {
+    var toChange = heightGap / scoreDisapear * obj.width;
+    var widthChanged = 0;
+    var id = setInterval(frame, 10);
+    function frame(){
+      if(widthChanged >= toChange){
+        clearInterval(id);
+      } else {
+        if(paused){}
+        else {
+          obj.width -= 0.3;
+          obj.height -= 0.3/4;
+          obj.x += 0.3/2;
+          obj.y = window.innerHeight - obj.height;
+          widthChanged += 0.3;
+        }
+      }
+    }
+  }
+}
+
+function spawnClouds(){
+  //Lagrer de forskjellige bildene
+  var sprites = []
+}
+
 
 function sound(src, volume){
   this.sound = document.createElement("audio");
@@ -605,6 +664,7 @@ function restartGame(){
   restart = true;
   startGame();
 }
+
 
 function checkHighscore(){
   var returnScore = myScore.score;
@@ -659,6 +719,5 @@ function printMousePos(event) {
 document.addEventListener("click", printMousePos);*/
 
 </script>
-<br>
 </body>
 </html>
