@@ -91,10 +91,13 @@ var touch = [false, false];
 function startGame() {
     //De forskjellige bakgrunnene, og lydikonet
     gradientBackground = new component(window.innerWidth, 30000, "img/bakgrunn/background.png", 0, -30000+window.innerHeight, "image");
+    //gradientBackground = new component(window.innerWidth, 30000, "img/bakgrunn/background.png", 0, -15000+window.innerHeight, "image");
+
+
 
     //For å se bedre ut på små skjermer
     if(window.innerWidth > 750){
-      vulcano = new component(window.innerWidth, 300, "img/bakgrunn/vulcano.png", 0, window.innerHeight-300, "image");
+      vulcano = new component(window.innerWidth, window.innerHeight, "img/bakgrunn/helvete.png", 0, 0, "image");
       spaceBackground = new component(window.innerWidth, window.innerHeight, "img/bakgrunn/space.png", 0, 0, "image");
     } else {
       vulcano = new component(1000, 300, "img/bakgrunn/vulcano.png", 0, window.innerHeight-300, "image");
@@ -112,7 +115,7 @@ function startGame() {
     myGamePiece.gravity = 0.5;
 
     //Laster teksten som kan bli vist
-    myScore = new component("23px", "PressStart2P", "black", 20, 40, "text");
+    myScore = new component("23px", "PressStart2P", "white", 20, 40, "text");
     pauseMenu = new component("30px", "PressStart2P", "white", window.innerWidth/2, window.innerHeight/2, "text");
 
     //CURRENTLY 0 pga irriterende
@@ -280,7 +283,7 @@ function component(width, height, src, x, y, type, breakable = false, moveable =
             this.speedY = 0;
             this.speedX = 0;
 
-            alert("Din score ble: " + myScore.score+"\nViste du at: "+deadFacts[Math.floor(Math.random()*deadFacts.length)]);
+            alert("Din score ble: " + myScore.score+"\nVisste du at: "+deadFacts[Math.floor(Math.random()*deadFacts.length)]);
 
             restartGame();
         }
@@ -344,7 +347,8 @@ function updateGameArea() {
 
             //Animasjon for å flytte bakgrunnen og endre den
             moveAnimation(gradientBackground, heightGap, 1);
-            zoomOutAnimation(vulcano, heightGap, 9500);
+
+            vulcanoToGradient(vulcano, heightGap, 10000);
 
             //Scoren endrer seg kun med avstanden fra den gamle plattformen og den nye, slik at den ikke vokser evig
             myScore.score += heightGap;
@@ -424,6 +428,7 @@ function makeplattform(){
   }
 
   //Endrer hvilke plattformer som blir laget utifra scoren
+  //10000, 20000
   if(myScore.score < 10000){
     myObstacles.push(new component(100, 20, "img/plattform/lava.gif", bPos[0], bPos[1], "image"));
   } else if (myScore.score > 10000 && myScore.score < 20000){
@@ -492,8 +497,11 @@ function moveAnimation(plattform, heightGap, isBackground){
     } else {
       if(paused){}
       else if(isBackground){
-        plattform.y += 1;
-        heightChange += 1;
+        //Bakgrunnen skal først begynne å gå opp ved 9000 i score
+        if(myScore.score > 10000){
+          plattform.y += 1;
+          heightChange += 1;
+        }
       } else {
         plattform.y += 2;
         heightChange += 2;
@@ -502,7 +510,21 @@ function moveAnimation(plattform, heightGap, isBackground){
   }
 }
 
-function zoomOutAnimation(obj, heightGap, scoreDisapear){
+function vulcanoToGradient(obj, heightGap, scoreDisapear){
+  var heightChange = 0;
+  var id = setInterval(frame, 10);
+  function frame(){
+    if(heightChange >= heightGap * (window.innerHeight / scoreDisapear)){
+      clearInterval(id);
+    } else {
+      if(paused){
+      } else {
+        obj.y += 1 * (window.innerHeight / scoreDisapear);
+        heightChange += 1 * (window.innerHeight / scoreDisapear);
+      }
+    }
+  }
+  /*
   if(myScore.score > scoreDisapear){
     var id = setInterval(disapear, 10);
     function disapear(){
@@ -535,6 +557,7 @@ function zoomOutAnimation(obj, heightGap, scoreDisapear){
       }
     }
   }
+  */
 }
 
 function spawnClouds(){

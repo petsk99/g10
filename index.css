@@ -1,25 +1,23 @@
-html, main {
-  height: 100%;
-}
-
 body {
   /*background-color: #0B76E6;*/
   background-image: url("img/bakgrunn/helvete.png");
   background-repeat: no-repeat;
   background-size: cover;
-  height: 100%;
 }
 
 .boks{
   background-color: #1515147E;
   /*border: 3px solid black;*/
-  border-radius: 25px;
-  height: 80%;
+  border-radius: 125px;
 }
 
 .title{
   padding-top: 0.5em;
   color: white;
+}
+
+#figur {
+  width:10em;
 }
 
 #regler{
@@ -28,9 +26,6 @@ body {
   margin-left: auto;
 }
 
-#cont{
-  height: 60%;
-}
 
 .plattformKnapp {
   background-image: url("img/meny/plattformMeny.png");
