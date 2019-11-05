@@ -1,0 +1,37 @@
+.title{
+  padding-top: 0.5em;
+}
+
+#figur {
+  width:10em;
+}
+
+.plattformKnapp {
+  background-image: url("img/meny/bakken.png");
+  /*background-image: url("img/plattform/block.gif");*/
+  border-radius: 5px;
+  margin-top: 1em;
+  border: hidden;
+  height: 3em;
+  width: 30%;
+}
+
+.utviklerBilde{
+  width: 5em;
+}
+
+a:link{
+  color:black;
+}
+
+a:visited {
+  color:black;
+}
+
+a:hover {
+  color:black;
+}
+
+a:active {
+  color:black;
+}
