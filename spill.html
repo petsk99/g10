@@ -6,12 +6,6 @@
 <title>Jump save humanity</title>
 <link rel="shortcut icon" type="image/x-icon" href="img/spiller/player_s.gif" />
 
-<!--
-
-  Fikse mute på mobil
-
--->
-
 <style>
 
 /* Implementerer pixel font */
@@ -48,6 +42,15 @@ html, body {margin: 0; height: 100%; overflow: hidden}
 <body onload="startGame()">
 <script>
 
+/*
+
+
+Vet at den svarte skjermen er window.innerWidth / 2
+Mulig å regne hvor langt til siden ett ord går
+
+
+*/
+
 //Spilleren
 var myGamePiece;
 //Plattformene spilleren lander på
@@ -56,7 +59,7 @@ var myObstacles = [];
 var clouds = [];
 //Scoren
 var myScore;
-
+var myPause;
 var mySound;
 var jumpSound;
 var backgroundMusic;
@@ -72,8 +75,13 @@ var mute = false;
 var paused = false;
 var pauseMenu;
 
+var usingSmallDevice = false;
+
 var deathMenu;
 var dead = false;
+
+var exitButton;
+var restartButton;
 
 var deadFacts = [
   "Gjennomsnittlig dyrelivbestand har sunket med 60 prosent på drøyt 40 år",
@@ -85,6 +93,7 @@ var deadFacts = [
   "Hvis man stoppet alt av klimagassutslipp ville det fortsatt skje klimaendringer, siden karbondioksid levealder i atmosfæren er 12 år og metan mye lengre",
   "Før den industrielle revolusjon var verden på vei mot en ny istid, men de enorme mengdene klimautslipp som kom med revolusjon skjøt den globale lufttemperaturen i været"
 ];
+var funfact = "";
 
 var restart = false;
 
@@ -92,21 +101,29 @@ var restart = false;
 var touch = [false, false];
 
 function startGame() {
+    funfact = "Visste du at:\n" + deadFacts[Math.floor(Math.random()*deadFacts.length)];
     //De forskjellige bakgrunnene, og lydikonet
     gradientBackground = new component(window.innerWidth, 30000, "img/bakgrunn/background.png", 0, -30000+window.innerHeight, "image");
-    //gradientBackground = new component(window.innerWidth, 30000, "img/bakgrunn/background.png", 0, -15000+window.innerHeight, "image");
-
-
 
     //For å se bedre ut på små skjermer
     if(window.innerWidth > 750){
       vulcano = new component(window.innerWidth, window.innerHeight, "img/bakgrunn/helvete.png", 0, 0, "image");
       spaceBackground = new component(window.innerWidth, window.innerHeight, "img/bakgrunn/space.png", 0, 0, "image");
     } else {
-      vulcano = new component(1000, 300, "img/bakgrunn/vulcano.png", 0, window.innerHeight-300, "image");
+      usingSmallDevice = true;
+      vulcano = new component(1000, 300, "img/bakgrunn/helvete.png", 0, window.innerHeight-300, "image");
       spaceBackground = new component(1000, window.innerHeight, "img/bakgrunn/space.png", 0, 0, "image");
     }
     mySound = new component(40, 32, "img/diverse/sound_on.png", 10, window.innerHeight-40, "image");
+    myPause = new component(32, 32, "img/diverse/pause.png", window.innerWidth-40, window.innerHeight-40, "image");
+
+    if(usingSmallDevice){
+      exitButton = new component(window.innerWidth/2*0.9, 40, "img/diverse/exit.png", 5, window.innerHeight/2+window.innerHeight/3, "image");
+      restartButton = new component(window.innerWidth/2*0.9, 40, "img/diverse/restart.png", window.innerWidth - window.innerWidth/2*0.9 - 5, window.innerHeight/2+window.innerHeight/3, "image");
+    } else {
+      exitButton = new component(window.innerWidth/2*0.4, 40, "img/diverse/exit.png", window.innerWidth/2-window.innerWidth/4+5, window.innerHeight/2+window.innerHeight/4-45, "image");
+      restartButton = new component(window.innerWidth/2*0.4, 40, "img/diverse/restart.png", window.innerWidth/2+window.innerWidth/4 - window.innerWidth/2*0.4 - 5, window.innerHeight/2+window.innerHeight/4-45, "image");
+    }
 
     //Lager figuren og plasserer han i midten
     myGamePiece = new component(30, 60, "img/spiller/player_s.gif", window.innerWidth/2-15, window.innerHeight-280, "image");
@@ -120,6 +137,7 @@ function startGame() {
     //Laster teksten som kan bli vist
     myScore = new component("23px", "PressStart2P", "white", 20, 40, "text");
     pauseMenu = new component("30px", "PressStart2P", "white", window.innerWidth/2, window.innerHeight/2, "text");
+    deadMenu = new component("18px", "PressStart2P", "white", window.innerWidth/2, window.innerHeight/2, "text", 1);
 
     //CURRENTLY 0 pga irriterende
     jumpSound = new sound("sounds/jump.wav", 0); //.4
@@ -166,21 +184,35 @@ var myGameArea = {
          window.addEventListener("touchend", touchend);
        } else {
          console.log("PC");
-       }
-       //For å kunne mute
-       window.addEventListener('mousedown', function (e){
-         if(e.clientX > 5 && e.clientX < 50 && e.clientY < window.innerHeight && e.clientY > window.innerHeight-40){
-           if(mute){
-             mute = false;
-             mySound.image.src="img/diverse/sound_on.png";
-             backgroundMusic.play();
-           } else {
-             mute = true;
-             mySound.image.src="img/diverse/sound_off.png";
-             backgroundMusic.stop();
+         //For å kunne mute
+         window.addEventListener('mousedown', function (e){
+           //Trykker på mute
+           //alert(clickInside(e.clientX, e.clientY, mySound.x, mySound.y, mySound.width, mySound.height));
+           if(clickInside(e.clientX, e.clientY, mySound.x, mySound.y, mySound.width, mySound.height)){
+             mute = !mute;
+             if(mute){
+               mySound.image.src="img/diverse/sound_off.png";
+               backgroundMusic.stop();
+             } else {
+               mySound.image.src="img/diverse/sound_on.png";
+               backgroundMusic.play();
+             }
            }
-         }
-       })
+           //Trykker på pause
+           else if(clickInside(e.clientX, e.clientY, myPause.x, myPause.y, myPause.width, myPause.height)){
+             paused = !paused;
+           }
+           //Trykket på exit
+           else if(dead && clickInside(e.clientX, e.clientY, exitButton.x, exitButton.y, exitButton.width, exitButton.height)){
+             window.location.href = 'index.html';
+           }
+           //Trykker på restart
+           else if(dead && clickInside(e.clientX, e.clientY, restartButton.x, restartButton.y, restartButton.width, restartButton.height)){
+             restartGame();
+           }
+         });
+       }
+
         //Ser hvilke knapper som blir tastet
         window.addEventListener('keydown', function (e) {
             myGameArea.key = e.keyCode;
@@ -220,21 +252,68 @@ function component(width, height, src, x, y, type, breakable = false, moveable =
     this.moveRight = true;
     this.broken = false;
     this.gravity = 0;
-    this.onBlock = 0;
+    this.onPlatform = 0;
     this.update = function() {
         ctx = myGameArea.context;
         if (this.type == "text") {
-            ctx.font = this.width + " " + this.height;
-            ctx.fillStyle = src;
+          ctx.font = this.width + " " + this.height;
+          ctx.fillStyle = src;
+          ctx.textAlign = "start";
+          //Betyr at teksten skal passe inn i en boks så vi må manuelt lage linjebrytere
+          if(this.breakable != 0){
+
+            //Splitter teksten inn etter avsnitt vi har laget hvor vi vet vi har lyst på linjeskift
+            var lines = this.text.split('\n');
+            ctx.textAlign = "center";
+            //Har ikke med faktasetningen ettersom at den er for lang
+            for(var j = 0; j<lines.length-1; j++){
+              ctx.fillText(lines[j], this.x, this.y + j*32);
+            }
+            //Får factastringen fra arrayen
+            var factString = lines[2];
+            //Splitter denne i en ny array hvor hvert ord er en verdien i arrayen
+            var word = factString.split(' ');
+            //Vet at hvis det er på en liten skjerm er den svarte boksen annerledes enn på en stor skjerm
+            var boxWidth = 0;
+            if(usingSmallDevice){
+              boxWidth = window.innerWidth;
+            } else {
+              boxWidth = window.innerWidth/2;
+            }
+            //Denne blir settningen
+            var sentanceString = " ";
+            //Antall linjer
+            var lines = 0;
+            for(var i = 0; i < word.length;i++){
+              //Regner hvor mange piksler ordet er
+              var wordWidth = ctx.measureText(word[i]).width;
+              //Plusser settningen vi har fra før av med ordet og ser om det blir større en boksbredden
+              if(ctx.measureText(sentanceString).width + wordWidth > boxWidth + ctx.measureText(" ").width){
+                //Blir den det skriver vi ut settningen
+                ctx.fillText(sentanceString, this.x, this.y + 64 + lines*32);
+                //Og reseter sentanceString med det siste ordet som ikke fikk plass på linjen
+                //Mellomrommet er paddingen
+                sentanceString = " "+word[i] + " ";
+                lines++;
+              } else {
+                //Er plass til ordet på linjen så den blir lagt til i stringen
+                sentanceString += word[i] + " ";
+              }
+            }
+            //Skriver ut den siste setningen med de ordene som er igjen
+            ctx.fillText(sentanceString, this.x, this.y + 64 + lines*32);
+
+          } else {
             ctx.fillText(this.text, this.x, this.y);
+          }
         } else if(type == "image"){
           ctx.drawImage(this.image,
           this.x,
           this.y,
           this.width, this.height);
         } else {
-            ctx.fillStyle = src;
-            ctx.fillRect(this.x, this.y, this.width, this.height);
+          ctx.fillStyle = src;
+          ctx.fillRect(this.x, this.y, this.width, this.height);
         }
     }
     this.newPos = function() {
@@ -283,14 +362,14 @@ function component(width, height, src, x, y, type, breakable = false, moveable =
         var rockbottom = myGameArea.canvas.height - this.height;
         if (this.y > rockbottom) {
             //De traff bunnen så de har tapt
-
-            this.y = -200;
+            dead = true;
+            /*this.y = -200;
             this.speedY = 0;
             this.speedX = 0;
 
             alert("Din score ble: " + myScore.score+"\nVisste du at: "+deadFacts[Math.floor(Math.random()*deadFacts.length)]);
 
-            restartGame();
+            restartGame();*/
         }
     }
     this.crashWith = function(otherobj) {
@@ -317,6 +396,12 @@ function updateGameArea() {
     var x, y, height, gap, minWidth, maxWidth;
 
     for (i = 0; i < myObstacles.length; i += 1) {
+      //Er dette mulig for å ikke ha en memory leak og bruke for mye prosesseringskraft
+      if(myObstacles[i].y > window.innerHeight + 300){
+        //console.log("Fjern " + i);
+        //myObstacles.splice(i);
+        //myGamePiece.onPlatform--;
+      }
       //Ser om spillet er pauset, hvis det ikke er det og plattformen er av typen moveable flyttet den på seg
       if(!paused){
         if(myObstacles[i].moveable){
@@ -334,13 +419,13 @@ function updateGameArea() {
         }
       }
 
-      //Ser om spilleren har krasjet i objektet
-      if (myGamePiece.crashWith(myObstacles[i])) {
+      //Ser om spilleren har krasjet i objektet og at objektet er synelig
+      if (myGamePiece.crashWith(myObstacles[i]) && myObstacles[i].y > 10) {
         //Gjør slik at figuren ikke "flyr" opp, men må lande på plattformen først. Finnes det en bedre måte?
         //Ser at spilleren faller også blir det bedre flyt i spillet hvis det er 0.5
         if(myGamePiece.speedY > 0.5 && myObstacles[i].broken == false){
           //Gjør slik at man ikke kan lande på en "gammel" plattform
-          if(myGamePiece.onBlock < i){
+          if(myGamePiece.onPlatform < i){
 
             //Ser om plattformen skal brekke
             if(myObstacles[i].breakable){
@@ -348,7 +433,7 @@ function updateGameArea() {
               myObstacles[i].broken = true;
             }
             //Regner avstanden mellom den gammle plattformen og den nye plattformene
-            var heightGap = myObstacles[myGamePiece.onBlock].y - myObstacles[i].y;
+            var heightGap = myObstacles[myGamePiece.onPlatform].y - myObstacles[i].y;
 
             //Animasjon for å flytte bakgrunnen og endre den
             moveAnimation(gradientBackground, heightGap, 1);
@@ -373,7 +458,7 @@ function updateGameArea() {
               moveAnimation(plattform, heightGap, 0);
             }
             //Brukes på starten for å regne heightGap
-            myGamePiece.onBlock = i;
+            myGamePiece.onPlatform = i;
           }
           if(!mute){
             jumpSound.play();
@@ -407,8 +492,29 @@ function updateGameArea() {
     myGamePiece.newPos();
     myGamePiece.update();
     mySound.update();
+    myPause.image.src = "img/diverse/pause.png";
     //Lager en svart gjennomsiktig backgrunn når pauset
-    if(paused){
+    if(dead){
+      myGameArea.context.fillStyle = "rgba(0, 0, 0, 0.7)";
+      //Funker dette på mobil?
+      if(usingSmallDevice){
+        myGameArea.context.fillRect(0, window.innerHeight/6, window.innerWidth, window.innerHeight/6*5);
+      } else {
+        myGameArea.context.fillRect(window.innerWidth/4, window.innerHeight/4, window.innerWidth/2, window.innerHeight/2);
+      }
+      deadMenu.text = "Din Score ble: " + myScore.score+"\n"+funfact;
+      myGameArea.context.font = "PressStart2P";
+      myGameArea.context.fontSize = "18px";
+      deadMenu.x = window.innerWidth / 2;
+      deadMenu.y = window.innerHeight / 4 + 25;
+      deadMenu.update();
+
+      //Lage knapper for quit eller restart
+      restartButton.update();
+      exitButton.update();
+      //Stopper bakgrunnen
+      paused = true;
+    } else if(paused){
       myGameArea.context.fillStyle = "rgba(0, 0, 0, 0.5)";
       myGameArea.context.fillRect(0, 0, window.innerWidth, window.innerHeight);
       myGameArea.context.font = "PressStart2P";
@@ -416,7 +522,14 @@ function updateGameArea() {
       pauseMenu.text = "PAUSED";
       pauseMenu.x = window.innerWidth / 2 - myGameArea.context.measureText(pauseMenu.text).width / 2 - 15;
       pauseMenu.y = window.innerHeight / 2 - 15;
+      myPause.image.src = "img/diverse/play.png";
+      myPause.update();
       pauseMenu.update();
+    } else {
+      //Til debugging av death skjermen
+      //dead = true;
+      myPause.image.src = "img/diverse/pause.png";
+      myPause.update();
     }
 }
 
@@ -441,7 +554,7 @@ function makePlattform(){
     myObstacles.push(new component(100, 20, "img/plattform/block.gif", bPos[0], bPos[1], "image", false, moveable));
     spawnClouds();
   } else {
-      myObstacles.push(new component(100, 30, "img/plattform/is.gif", bPos[0], bPos[1], "image", breakable, moveable));
+    myObstacles.push(new component(100, 30, "img/plattform/is.gif", bPos[0], bPos[1], "image", breakable, moveable));
   }
 }
 
@@ -474,7 +587,7 @@ function calculateBlock(start){
     }
   }while(!validPos);
 
-//LØST? MEN BUGGY
+  //Hvis ikke får man problem med at highestBlock har en y verdi som blir lavere og den nye platformen går ikke nedover
   if(highestBlock.heightMoving > 0){
     posY += highestBlock.heightMoving;
   }
@@ -584,6 +697,8 @@ function sound(src, volume){
 
 function restartGame(){
   //Slik at spilleren ikke starter å løpe mot en av sidene
+  paused = false;
+  dead = false;
   touch = [false, false];
   myGameArea.key = null;
 
@@ -614,10 +729,29 @@ function checkHighscore(){
   return [newHigh, returnScore];
 }
 
+// Tatt fra https://stackoverflow.com/questions/24384368/simple-button-in-html5-canvas
+//Function to check whether a point is inside a rectangle
+function clickInside(posX, posY, x, y, width, height){
+    return posX > x && posX < x+width && posY < y+height && posY > y
+}
+
 // For mobil og nettbrett
 function touchstart(evt){
   //Ser om trykket er på høyre eller venstre side av skjermen
-  if(evt.touches[0].clientX > window.innerWidth/2){
+  if(evt.touches[0].clientX > 5 && evt.touches[0].clientX < 50 && evt.touches[0].clientY < window.innerHeight && evt.touches[0].clientY > window.innerHeight-40){
+    mute = !mute;
+  } else if(evt.touches[0].clientX < window.innerWidth && evt.touches[0].clientX > window.innerWidth - 50 && evt.touches[0].clientY < window.innerHeight && evt.touches[0].clientY > window.innerHeight-40){
+    paused = !paused;
+  }
+  //Trykket på exit
+  else if(dead && clickInside(evt.touches[0].clientX, evt.touches[0].clientY, exitButton.x, exitButton.y, exitButton.width, exitButton.height)){
+    window.location.href = 'index.html';
+  }
+  //Trykker på restart
+  else if(dead && clickInside(evt.touches[0].clientX, evt.touches[0].clientY, restartButton.x, restartButton.y, restartButton.width, restartButton.height)){
+    restartGame();
+  }
+  else if(evt.touches[0].clientX > window.innerWidth/2){
     touch = [true, false];
   } else if (evt.touches[0].clientX < window.innerWidth/2){
     touch = [true, true];
@@ -635,6 +769,13 @@ function touchmove(evt){
 
 //Når man ikke trykker lenger
 function touchend(evt){
+  if(mute){
+    mySound.image.src="img/diverse/sound_off.png";
+    backgroundMusic.stop();
+  } else {
+    mySound.image.src="img/diverse/sound_on.png";
+    backgroundMusic.play();
+  }
   touch = [false, false];
 }
 
