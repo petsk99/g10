@@ -72,6 +72,9 @@ var mute = false;
 var paused = false;
 var pauseMenu;
 
+var deathMenu;
+var dead = false;
+
 var deadFacts = [
   "Gjennomsnittlig dyrelivbestand har sunket med 60 prosent på drøyt 40 år",
   "Det er mer karbondioksid i atmosfæren vår nå enn noen gang i menneskets historie",
@@ -127,7 +130,7 @@ function startGame() {
     var pleased = false;
     while(!pleased){
       for(var b = 0; b < startPlattformer; b++){
-        var bPos = calculateBlock(true);
+        var bPos = calculateBlock(true, 0);
         myObstacles.push(new component(100, 20, "img/plattform/lava.gif", bPos[0], bPos[1], "image"));
       }
       //Denne passer på at hele skjermen blir fylt med plattformer
@@ -196,7 +199,7 @@ var myGameArea = {
     }
 }
 
-function component(width, height, src, x, y, type, breakable = false, moveable = false) {
+function component(width, height, src, x, y, type, breakable = false, moveable = false, heightChange = 0) {
     this.type = type;
     if(this.type == "image"){
       this.image = new Image();
@@ -212,6 +215,8 @@ function component(width, height, src, x, y, type, breakable = false, moveable =
     this.heightChange = 0;
     this.breakable = breakable;
     this.moveable = moveable;
+    this.currentlyMoving = false;
+    this.heightMoving = heightChange;
     this.moveRight = true;
     this.broken = false;
     this.gravity = 0;
@@ -356,8 +361,8 @@ function updateGameArea() {
             //For å passe på at skjermen alltid er full
             var fullScreen = false;
             while(!fullScreen){
-              if(myObstacles[myObstacles.length-1].y > -200){
-                makeplattform();
+              if(myObstacles[myObstacles.length-1].y > -600){
+                makePlattform();
               } else {
                 fullScreen = true;
               }
@@ -389,9 +394,10 @@ function updateGameArea() {
       gradientBackground.update();
       vulcano.update();
     }
-
-    for (i = 0; i < clouds.length; i += 1) {
-        clouds[i].update();
+    if(myScore.score > 10000 && myScore.score < 25000){
+      for (i = 0; i < clouds.length; i += 1) {
+          clouds[i].update();
+      }
     }
     for (i = 0; i < myObstacles.length; i += 1) {
         myObstacles[i].update();
@@ -414,7 +420,7 @@ function updateGameArea() {
     }
 }
 
-function makeplattform(){
+function makePlattform(){
   var bPos = calculateBlock(false);
   var moveable = false;
   var breakable = false;
@@ -430,7 +436,7 @@ function makeplattform(){
   //Endrer hvilke plattformer som blir laget utifra scoren
   //10000, 20000
   if(myScore.score < 10000){
-    myObstacles.push(new component(100, 20, "img/plattform/lava.gif", bPos[0], bPos[1], "image"));
+    myObstacles.push(new component(100, 20, "img/plattform/lava.gif", bPos[0], bPos[1], "image", false, false));
   } else if (myScore.score > 10000 && myScore.score < 20000){
     myObstacles.push(new component(100, 20, "img/plattform/block.gif", bPos[0], bPos[1], "image", false, moveable));
     spawnClouds();
@@ -468,6 +474,11 @@ function calculateBlock(start){
     }
   }while(!validPos);
 
+//LØST? MEN BUGGY
+  if(highestBlock.heightMoving > 0){
+    posY += highestBlock.heightMoving;
+  }
+
   pos = [posX, posY];
 
   return pos;
@@ -489,11 +500,18 @@ function area(x1,y1,x2,y2,x3,y3){
 }
 
 function moveAnimation(plattform, heightGap, isBackground){
+  if(plattform.currentlyMoving){
+    heightChange -= plattform.heightMoving;
+  } else {
+    plattform.heightMoving = heightGap;
+  }
+
   var heightChange = 0;
   var id = setInterval(frame, 10);
   function frame(){
     if(heightChange >= heightGap){
       clearInterval(id);
+      plattform.currentlyMoving = false;
     } else {
       if(paused){}
       else if(isBackground){
@@ -503,8 +521,10 @@ function moveAnimation(plattform, heightGap, isBackground){
           heightChange += 1;
         }
       } else {
-        plattform.y += 2;
-        heightChange += 2;
+        plattform.currentlyMoving = true;
+        plattform.y += 3;
+        heightChange += 3;
+        plattform.heightMoving -= 3;
       }
     }
   }
@@ -524,40 +544,6 @@ function vulcanoToGradient(obj, heightGap, scoreDisapear){
       }
     }
   }
-  /*
-  if(myScore.score > scoreDisapear){
-    var id = setInterval(disapear, 10);
-    function disapear(){
-      if(obj.width <= 0){
-        clearInterval(id);
-      } else {
-        obj.width -= 0.3;
-        obj.height -= 0.3/4;
-        obj.x += 0.3/2;
-        obj.y = window.innerHeight - obj.height;
-      }
-    }
-  } else {
-    var toChange = heightGap / scoreDisapear * obj.width;
-    var widthChanged = 0;
-    var id = setInterval(frame, 10);
-    function frame(){
-      if(widthChanged >= toChange){
-        clearInterval(id);
-      } else {
-        if(paused){}
-        else {
-          obj.width -= 0.3;
-          obj.height -= 0.3/4;
-          if(window.innerWidth > 750)
-            obj.x += 0.3/2;
-          obj.y = window.innerHeight - obj.height;
-          widthChanged += 0.3;
-        }
-      }
-    }
-  }
-  */
 }
 
 function spawnClouds(){
@@ -603,6 +589,7 @@ function restartGame(){
 
   myGamePiece = [];
   myObstacles = [];
+  clouds = [];
   myScore = [];
   restart = true;
   startGame();

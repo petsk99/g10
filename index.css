@@ -1,3 +1,7 @@
+html, main {
+  height: 100%;
+}
+
 body {
   /*background-color: #0B76E6;*/
   background-image: url("img/bakgrunn/helvete.png");
