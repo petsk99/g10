@@ -2,12 +2,18 @@ html, main {
   height: 100%;
 }
 
+
 body {
-  /*background-color: #0B76E6;*/
+  /* Hvis siden er for lang vil dette være bakgrunnsfargen isteden for hvit */
+  background-color: #19191B;
   background-image: url("img/bakgrunn/helvete.png");
   background-repeat: no-repeat;
   background-size: cover;
   height: 100%;
+}
+
+.container{
+  color: white;
 }
 
 .boks{
@@ -22,16 +28,16 @@ body {
   color: white;
 }
 
-#regler{
-  color: white;
-  width: 95%;
-  margin-left: auto;
+@media(max-width:1024px){
+  .plattformKnapp{
+    width: 90%;
+  }
 }
-
-#cont{
-  height: 60%;
+@media(min-width:1024px){
+  .plattformKnapp{
+    width: 30%;
+  }
 }
-
 .plattformKnapp {
   background-image: url("img/meny/plattformMeny.png");
   background-repeat: no-repeat;
@@ -41,13 +47,10 @@ body {
   margin-top: 1em;
   border: hidden;
   height: 3.5em;
-  width: 30%;
-
-
 }
 
 .plattformKnapp:hover {
-
+  cursor: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAzElEQVRYR+2X0Q6AIAhF5f8/2jYXZkwEjNSVvVUjDpcrGgT7FUkI2D9xRfQETwNIiWO85wfINfQUEyxBG2ArsLwC0jioGt5zFcwF4OYDPi/mBYKm4t0U8ATgRm3ThFoAqkhNgWkA0jJLvaOVSs7j3qMnSgXWBMiWPXe94QqMBMBc1VZIvaTu5u5pQewq0EqNZvIEMCmxAawK0DNkay9QmfFNAJUXfgGgUkLaE7j/h8fnASkxHTz0DGIBMCnBeeM7AArpUd3mz2x3C7wADglA8BcWMZhZAAAAAElFTkSuQmCC) 14 0, pointer;
   animation-name: crack;
   animation-duration: 1s;
   animation-iteration-count : 1;
@@ -55,7 +58,10 @@ body {
 }
 
 .utviklerBilde{
-  width: 5em;
+  margin-top: auto;
+  margin-left: auto;
+  margin-right: auto;
+  height: 10em;
 }
 
 a:link{

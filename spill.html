@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <meta charset="UTF-8"/>
 <title>Jump save humanity</title>
-<link rel="shortcut icon" type="image/x-icon" href="img/spiller/player_s.gif" />
+<link rel="shortcut icon" type="image/x-icon" href="img/spiller/player_s.png" />
 
 <style>
 
@@ -82,6 +82,8 @@ var dead = false;
 
 var exitButton;
 var restartButton;
+var buttonAnimationStarted = false;
+var buttonAnimationFinished = false;
 
 var deadFacts = [
   "Gjennomsnittlig dyrelivbestand har sunket med 60 prosent på drøyt 40 år",
@@ -121,12 +123,12 @@ function startGame() {
       exitButton = new component(window.innerWidth/2*0.9, 40, "img/diverse/exit.png", 5, window.innerHeight/2+window.innerHeight/3, "image");
       restartButton = new component(window.innerWidth/2*0.9, 40, "img/diverse/restart.png", window.innerWidth - window.innerWidth/2*0.9 - 5, window.innerHeight/2+window.innerHeight/3, "image");
     } else {
-      exitButton = new component(window.innerWidth/2*0.4, 40, "img/diverse/exit.png", window.innerWidth/2-window.innerWidth/4+5, window.innerHeight/2+window.innerHeight/4-45, "image");
-      restartButton = new component(window.innerWidth/2*0.4, 40, "img/diverse/restart.png", window.innerWidth/2+window.innerWidth/4 - window.innerWidth/2*0.4 - 5, window.innerHeight/2+window.innerHeight/4-45, "image");
+      exitButton = new component(window.innerWidth/2*0.4, 40, "img/diverse/exit_0.png", window.innerWidth/2-window.innerWidth/4+5, window.innerHeight/2+window.innerHeight/4-45, "image");
+      restartButton = new component(window.innerWidth/2*0.4, 40, "img/diverse/restart_0.png", window.innerWidth/2+window.innerWidth/4 - window.innerWidth/2*0.4 - 5, window.innerHeight/2+window.innerHeight/4-45, "image");
     }
 
     //Lager figuren og plasserer han i midten
-    myGamePiece = new component(30, 60, "img/spiller/player_s.gif", window.innerWidth/2-15, window.innerHeight-280, "image");
+    myGamePiece = new component(30, 60, "img/spiller/player_s.png", window.innerWidth/2-15, window.innerHeight-280, "image");
 
     //Den første plattformen spilleren starter på
     myObstacles.push(new component(window.innerWidth, 40, "img/plattform/BakkenLava.gif", 0, window.innerHeight-40, "image"));
@@ -140,8 +142,8 @@ function startGame() {
     deadMenu = new component("18px", "PressStart2P", "white", window.innerWidth/2, window.innerHeight/2, "text", 1);
 
     //CURRENTLY 0 pga irriterende
-    jumpSound = new sound("sounds/jump.wav", 0); //.4
-    backgroundMusic = new sound("sounds/background.mp3", 0); //1
+    jumpSound = new sound("sounds/jump.wav", 0.4); //.4
+    backgroundMusic = new sound("sounds/background.mp3", 1); //1
 
     //Starter med nok plattformer
     var startPlattformer = Math.floor(Math.random()*4+3);
@@ -149,7 +151,11 @@ function startGame() {
     while(!pleased){
       for(var b = 0; b < startPlattformer; b++){
         var bPos = calculateBlock(true, 0);
-        myObstacles.push(new component(100, 20, "img/plattform/lava.gif", bPos[0], bPos[1], "image"));
+        var platformWidth = 100;
+        if(usingSmallDevice){
+          platformWidth = 75;
+        }
+        myObstacles.push(new component(platformWidth, 20, "img/plattform/lava.gif", bPos[0], bPos[1], "image"));
       }
       //Denne passer på at hele skjermen blir fylt med plattformer
       if(myObstacles[myObstacles.length-1].y > 150){
@@ -184,6 +190,21 @@ var myGameArea = {
          window.addEventListener("touchend", touchend);
        } else {
          console.log("PC");
+         window.addEventListener('mousemove', function(e){
+           if(dead && clickInside(e.clientX, e.clientY, exitButton.x, exitButton.y, exitButton.width, exitButton.height)){
+             buttonAnimation(exitButton, "img/diverse/exit_");
+             document.body.style.cursor = 'url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAzElEQVRYR+2X0Q6AIAhF5f8/2jYXZkwEjNSVvVUjDpcrGgT7FUkI2D9xRfQETwNIiWO85wfINfQUEyxBG2ArsLwC0jioGt5zFcwF4OYDPi/mBYKm4t0U8ATgRm3ThFoAqkhNgWkA0jJLvaOVSs7j3qMnSgXWBMiWPXe94QqMBMBc1VZIvaTu5u5pQewq0EqNZvIEMCmxAawK0DNkay9QmfFNAJUXfgGgUkLaE7j/h8fnASkxHTz0DGIBMCnBeeM7AArpUd3mz2x3C7wADglA8BcWMZhZAAAAAElFTkSuQmCC) 14 0, pointer';
+           } else if(dead && clickInside(e.clientX, e.clientY, restartButton.x, restartButton.y, restartButton.width, restartButton.height)){
+             buttonAnimation(restartButton, "img/diverse/restart_");
+             document.body.style.cursor = 'url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAzElEQVRYR+2X0Q6AIAhF5f8/2jYXZkwEjNSVvVUjDpcrGgT7FUkI2D9xRfQETwNIiWO85wfINfQUEyxBG2ArsLwC0jioGt5zFcwF4OYDPi/mBYKm4t0U8ATgRm3ThFoAqkhNgWkA0jJLvaOVSs7j3qMnSgXWBMiWPXe94QqMBMBc1VZIvaTu5u5pQewq0EqNZvIEMCmxAawK0DNkay9QmfFNAJUXfgGgUkLaE7j/h8fnASkxHTz0DGIBMCnBeeM7AArpUd3mz2x3C7wADglA8BcWMZhZAAAAAElFTkSuQmCC) 14 0, pointer';
+           } else {
+             document.body.style.cursor = 'url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABFklEQVRYR9WXURLDIAhE6/0PbSdOtUpcd1Gnpv1KGpTHBpCE1/cXq+vrMph7dGvXZTtpfW10DCA5jrH1H0Jhs5E0hnZdCR+vb5S8Nn8mQCeS9BdSalYJqMBjAGzq59xAESN7VFVUgV8AZB/dZBR7QTFDCqGquvUBVVoEtgIwpQRzmANSFHgWQKExHdIrPeuMvQNDarXe6nC/AutgV3JW+6bgqQLeV8FekRtgV+ToDKEKnACYKsfZjjkam7a0ZpYTytwmgainpC3HvwBocgKOxqRjehoR9DFKNFYtOwCGYCszobeCbl26N6yyQ6g8X/Wex/rBPsNEV6qAMaJPMynIHQCoSqS9JSMmwef51LflTgCRszU7DvAGiV6mHWfsaVUAAAAASUVORK5CYII=), auto';
+             buttonAnimationStarted = false;
+             buttonAnimationFinished = false;
+             exitButton.image.src ="img/diverse/exit_0.png";
+             restartButton.image.src="img/diverse/restart_0.png";
+           }
+         });
          //For å kunne mute
          window.addEventListener('mousedown', function (e){
            //Trykker på mute
@@ -321,14 +342,14 @@ function component(width, height, src, x, y, type, breakable = false, moveable =
         this.speedY += this.gravity;
         //Bevegelse på mobilen
         if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
-          if(touch[0] && touch[1]){ this.speedX = -7; myGamePiece.image.src="img/spiller/player_l.gif"; } // VENSTRE
-          else if(touch[0] && !touch[1]){ this.speedX = 7; myGamePiece.image.src="img/spiller/player_r.gif"; } // HØYRE
-          else { this.speedX = 0;myGamePiece.image.src="img/spiller/player_s.gif"; }
+          if(touch[0] && touch[1]){ this.speedX = -7; myGamePiece.image.src="img/spiller/player_l.png"; } // VENSTRE
+          else if(touch[0] && !touch[1]){ this.speedX = 7; myGamePiece.image.src="img/spiller/player_r.png"; } // HØYRE
+          else { this.speedX = 0;myGamePiece.image.src="img/spiller/player_s.png"; }
         } else {
           //Får hvilke nøkkelkode det er fra https://keycode.info/
-          if ((myGameArea.key && myGameArea.key == 37)) {this.speedX = -7; myGamePiece.image.src="img/spiller/player_l.gif";} /* Bevger seg til VENSTRE */
-          else if ((myGameArea.key && myGameArea.key == 39)) {this.speedX = 7; myGamePiece.image.src="img/spiller/player_r.gif";} /* Beveger seg til HØYRE */
-          else {this.speedX = 0; myGamePiece.image.src="img/spiller/player_s.gif";} /* Hvis ingen av tastene blir trykt står den stille */
+          if ((myGameArea.key && myGameArea.key == 37)) {this.speedX = -7; myGamePiece.image.src="img/spiller/player_l.png";} /* Bevger seg til VENSTRE */
+          else if ((myGameArea.key && myGameArea.key == 39)) {this.speedX = 7; myGamePiece.image.src="img/spiller/player_r.png";} /* Beveger seg til HØYRE */
+          else {this.speedX = 0; myGamePiece.image.src="img/spiller/player_s.png";} /* Hvis ingen av tastene blir trykt står den stille */
         }
         //I Google Chrome kan man kun auto starte musikk etter input på nettsiden
         if(myGameArea.key && musicStarted == false){
@@ -429,7 +450,12 @@ function updateGameArea() {
 
             //Ser om plattformen skal brekke
             if(myObstacles[i].breakable){
-              myObstacles[i].image.src = "img/animasjoner/is_2.gif";
+              //Vet da at det er en isblokk
+              if(myScore.score < 30000){
+                myObstacles[i].image.src = "img/animasjoner/is_2.gif";
+              } else {
+                myObstacles[i].image.src = "img/animasjoner/astroide_2.gif";
+              }
               myObstacles[i].broken = true;
             }
             //Regner avstanden mellom den gammle plattformen og den nye plattformene
@@ -537,6 +563,7 @@ function makePlattform(){
   var bPos = calculateBlock(false);
   var moveable = false;
   var breakable = false;
+  var platformWidth = 100;
 
   if(Math.floor(Math.random()*10) == 9){
     breakable = true;
@@ -546,15 +573,24 @@ function makePlattform(){
     moveable = true;
   }
 
+  if(usingSmallDevice){
+    platformWidth = 75;
+  }
+
   //Endrer hvilke plattformer som blir laget utifra scoren
   //10000, 20000
   if(myScore.score < 10000){
-    myObstacles.push(new component(100, 20, "img/plattform/lava.gif", bPos[0], bPos[1], "image", false, false));
+    myObstacles.push(new component(platformWidth, 20, "img/plattform/lava.gif", bPos[0], bPos[1], "image", false, false));
   } else if (myScore.score > 10000 && myScore.score < 20000){
-    myObstacles.push(new component(100, 20, "img/plattform/block.gif", bPos[0], bPos[1], "image", false, moveable));
+    myObstacles.push(new component(platformWidth, 20, "img/plattform/block.gif", bPos[0], bPos[1], "image", false, moveable));
     spawnClouds();
+  } else if (myScore.score > 20000 && myScore.score < 30000) {
+    if(breakable)
+      myObstacles.push(new component(platformWidth, 30, "img/animasjoner/is_1.gif", bPos[0], bPos[1], "image", breakable, moveable));
+    else
+      myObstacles.push(new component(platformWidth, 30, "img/plattform/is.gif", bPos[0], bPos[1], "image", breakable, moveable));
   } else {
-    myObstacles.push(new component(100, 30, "img/plattform/is.gif", bPos[0], bPos[1], "image", breakable, moveable));
+    myObstacles.push(new component(platformWidth, 30, "img/animasjoner/astroide_1.gif", bPos[0], bPos[1], "image", true, moveable));
   }
 }
 
@@ -590,6 +626,11 @@ function calculateBlock(start){
   //Hvis ikke får man problem med at highestBlock har en y verdi som blir lavere og den nye platformen går ikke nedover
   if(highestBlock.heightMoving > 0){
     posY += highestBlock.heightMoving;
+  }
+
+  //Ettersom at platformene går nedover med 3 og 3 piksler må vi passe på at blokken er i 3 gangen slik at platformene ikke går lavere og lavere
+  if((window.innerHeight-40 - posY) % 3 != 0){
+    posY += posY % 3;
   }
 
   pos = [posX, posY];
@@ -659,6 +700,24 @@ function vulcanoToGradient(obj, heightGap, scoreDisapear){
   }
 }
 
+function buttonAnimation(obj, src){
+  if(buttonAnimationStarted || obj.image.src == src+"_4.png" || buttonAnimationFinished)
+    return;
+
+  buttonAnimationStarted = true;
+  var id = setInterval(frame, 250);
+  var animFrame = 1;
+  function frame(){
+    if(animFrame >= 4){
+      clearInterval(id);
+      buttonAnimationStarted = false;
+      buttonAnimationFinished = true;
+    }
+    obj.image.src = src+animFrame+".png";
+    animFrame++;
+  }
+}
+
 function spawnClouds(){
   //Lagrer de forskjellige bildene
   var sprites = ["img/sky/1.png", "img/sky/2.png", "img/sky/3.png", "img/sky/4.png"];
@@ -701,6 +760,7 @@ function restartGame(){
   dead = false;
   touch = [false, false];
   myGameArea.key = null;
+  jumpSound = null;
 
   myGamePiece = [];
   myObstacles = [];
