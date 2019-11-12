@@ -9,7 +9,6 @@
       content="width=device-width, initial-scale=1.0"
       media="screen"
     />
-
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
@@ -21,55 +20,58 @@
     <link href="https://unpkg.com/nes.css/css/nes.css" rel="stylesheet" />
     <link rel="stylesheet" href="style.css" type="text/css" />
   </head>
+
   <body>
+      <main role="main" class="text-center">
+        <div class="container">
+          <h1 class="jumbotron-heading title" style="font-size:3em">Spillets regler</h1>
+          <br/>
+          <div class="boks">
+            <br/>
+            <div class="row">
+              <div class="col-md-4">
+                <img src="img/meny/X10.png" placeholder="x10" alt="X10 Score" height="32px" /><br/><br/>
+                  <p>
+                    Jo lengere opp du kommer deg, desto flere poeng får du
+                  </p>
+              </div>
+              <div class="col-md-4">
+                <img src="img/meny/left.png" placeholder="Pil mot venstre" alt="Pil Mot Venstre" height="32px" />
+                <img src="img/meny/right.png" placeholder="Pil mot høyre" alt="Pil Mot Høyre" height="32px" /><br/><br/>
+                <p>
+                  Styr figuren med piltastene dersom du spiller på PC
+                </p>
+              </div>
+              <div class="col-md-4">
+                <img src="img/meny/scull.png" placeholder="Dødningshode" alt="Dødningshode" height="32px" /><br/><br/>
+                  <p>
+                    Dersom du faller ned på bakken er spillet over
+                  </p>
+              </div>
+            </div>
+            <br/>
+            <div class="row">
+              <div class="col-md-4">
+                <img src="img/meny/play.png" placeholder="Start spillet igjen knapp" alt="Start spillet igjen knapp" height="32px" />
+                <img src="img/meny/pause.png" placeholder="Pause knapp" alt="Pause knapp" height="32px" /><br/><br/>
+                Du kan pause eller starte spillet igjen ved å trykke på escape tasten eller symbolet nederst til venstre inne i spillet
+              </div>
+              <div class="col-md-4">
+                <img src="img/meny/mute.png" placeholder="Mute spillet knapp" alt="Mute spillet knapp" height="32px" />
+                <img src="img/meny/sound.png" placeholder="Slå på lyd knapp" alt="Slå på lyd knapp" height="32px" /><br/><br/>
+                For å mute eller unmute spillet er det mulig nederst til venstre inne i spillet
+              </div>
+              <div class="col-md-4">
+                <img src="img/meny/phone.png" placeholder="Mobiltelefon" alt="Mobiltelefon" height="32px" /><br/><br/>
+                På nettbrett og mobil må figuren styres ved hjelp av touch. Trykk på venstre side av skjermen for å gå mot venstre, og høyre side når du skal til høyre
+              </div>
+            </div>
 
-    <main role="main" class="text-center">
-
-    <div class="container">
-      <h1 class="jumbotron-heading title" style="font-size:3em">Spillets regler</h1>
-      <br/>
-      <!-- Fikse til å gjøre bedre -->
-      <div class="boks">
-        <br/>
-        <div class="row">
-          <div class="col-md-4">
-            <img src="img/meny/X10.png" placeholder="x10" alt="X10 Score" height="32px" /><br/><br/>
-              <p>
-                Jo lengere opp du kommer deg, desto flere poeng får du
-              </p>
-          </div>
-          <div class="col-md-4">
-            <img src="img/meny/left.png" placeholder="Pil mot venstre" alt="Pil Mot Venstre" height="32px" />
-            <img src="img/meny/right.png" placeholder="Pil mot høyre" alt="Pil Mot Høyre" height="32px" /><br/><br/>
-            <p>
-              Styr figuren med piltastene dersom du spiller på PC. På nettbrett og mobil må figuren styres ved hjelp av touch
-            </p>
-          </div>
-          <div class="col-md-4">
-            <img src="img/meny/scull.png" placeholder="Dødningshode" alt="Dødningshode" height="32px" /><br/><br/>
-              <p>
-                Dersom du faller ned på bakken er spillet over
-              </p>
-          </div>
+            <br/>
         </div>
-
-
-
-<!--
-          <ol id="regler">
-            <li>Styr figuren med piltastene dersom du spiller på PC. På nettbrett og mobil må figuren styres ved hjelp av touch.</li>
-            <li>Dersom du faller ned på bakken er spillet over</li>
-            <li>Jo lengere opp du kommer deg, jo fler poeng får du</li>
-          </ol>
-  -->
-  <br/>
-    </div>
-      <a href="index.html"><button type="button" class="plattformKnapp">Tilbake</button></a>
-      <br/><br/><br/>
-    </div>
-
-
-  </main>
-
+        <a href="index.html"><button type="button" class="plattformKnapp">Tilbake</button></a>
+        <br/><br/><br/>
+      </div>
+    </main>
   </body>
 </html>

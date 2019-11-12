@@ -42,15 +42,6 @@ html, body {margin: 0; height: 100%; overflow: hidden}
 <body onload="startGame()">
 <script>
 
-/*
-
-
-Vet at den svarte skjermen er window.innerWidth / 2
-Mulig å regne hvor langt til siden ett ord går
-
-
-*/
-
 //Spilleren
 var myGamePiece;
 //Plattformene spilleren lander på
@@ -109,19 +100,19 @@ function startGame() {
 
     //For å se bedre ut på små skjermer
     if(window.innerWidth > 750){
-      vulcano = new component(window.innerWidth, window.innerHeight, "img/bakgrunn/helvete.png", 0, 0, "image");
+      vulcano = new component(window.innerWidth, window.innerHeight, "img/bakgrunn/vulkan.png", 0, 0, "image");
       spaceBackground = new component(window.innerWidth, window.innerHeight, "img/bakgrunn/space.png", 0, 0, "image");
     } else {
       usingSmallDevice = true;
-      vulcano = new component(1000, 300, "img/bakgrunn/helvete.png", 0, window.innerHeight-300, "image");
+      vulcano = new component(1000, 300, "img/bakgrunn/vulkan.png", 0, window.innerHeight-300, "image");
       spaceBackground = new component(1000, window.innerHeight, "img/bakgrunn/space.png", 0, 0, "image");
     }
     mySound = new component(40, 32, "img/diverse/sound_on.png", 10, window.innerHeight-40, "image");
     myPause = new component(32, 32, "img/diverse/pause.png", window.innerWidth-40, window.innerHeight-40, "image");
 
     if(usingSmallDevice){
-      exitButton = new component(window.innerWidth/2*0.9, 40, "img/diverse/exit.png", 5, window.innerHeight/2+window.innerHeight/3, "image");
-      restartButton = new component(window.innerWidth/2*0.9, 40, "img/diverse/restart.png", window.innerWidth - window.innerWidth/2*0.9 - 5, window.innerHeight/2+window.innerHeight/3, "image");
+      exitButton = new component(window.innerWidth/2*0.9, 40, "img/diverse/exit_0.png", 5, window.innerHeight/2+window.innerHeight/3, "image");
+      restartButton = new component(window.innerWidth/2*0.9, 40, "img/diverse/restart_0.png", window.innerWidth - window.innerWidth/2*0.9 - 5, window.innerHeight/2+window.innerHeight/3, "image");
     } else {
       exitButton = new component(window.innerWidth/2*0.4, 40, "img/diverse/exit_0.png", window.innerWidth/2-window.innerWidth/4+5, window.innerHeight/2+window.innerHeight/4-45, "image");
       restartButton = new component(window.innerWidth/2*0.4, 40, "img/diverse/restart_0.png", window.innerWidth/2+window.innerWidth/4 - window.innerWidth/2*0.4 - 5, window.innerHeight/2+window.innerHeight/4-45, "image");
@@ -480,8 +471,10 @@ function updateGameArea() {
             }
 
             //Flytter alle plattformene ned med høydeforskjellen mellom gamle og nye plattformen
+            var platId = 0;
             for(plattform of myObstacles){
-              moveAnimation(plattform, heightGap, 0);
+              moveAnimation(plattform, heightGap, 0, platId);
+              platId++;
             }
             //Brukes på starten for å regne heightGap
             myGamePiece.onPlatform = i;
@@ -653,7 +646,7 @@ function area(x1,y1,x2,y2,x3,y3){
   return Math.abs((x1*(y2-y3) + x2*(y3-y1)+x3*(y1-y2))/2.0);
 }
 
-function moveAnimation(plattform, heightGap, isBackground){
+function moveAnimation(plattform, heightGap, isBackground, platformId = 0){
   if(plattform.currentlyMoving){
     heightChange -= plattform.heightMoving;
   } else {
@@ -675,6 +668,11 @@ function moveAnimation(plattform, heightGap, isBackground){
           heightChange += 1;
         }
       } else {
+        //For å forhindre at plattformen "sklir" nedover på skjermen
+        if(myGamePiece.onPlatform == platformId && plattform.y > window.innerHeight - 40){
+          clearInterval(id);
+          return;
+        }
         plattform.currentlyMoving = true;
         plattform.y += 3;
         heightChange += 3;
@@ -798,9 +796,9 @@ function clickInside(posX, posY, x, y, width, height){
 // For mobil og nettbrett
 function touchstart(evt){
   //Ser om trykket er på høyre eller venstre side av skjermen
-  if(evt.touches[0].clientX > 5 && evt.touches[0].clientX < 50 && evt.touches[0].clientY < window.innerHeight && evt.touches[0].clientY > window.innerHeight-40){
-    mute = !mute;
-  } else if(evt.touches[0].clientX < window.innerWidth && evt.touches[0].clientX > window.innerWidth - 50 && evt.touches[0].clientY < window.innerHeight && evt.touches[0].clientY > window.innerHeight-40){
+  if(clickInside(evt.touches[0].clientX, evt.touches[0].clientY, mySound.x, mySound.y, mySound.width, mySound.height)){
+      mute = !mute;
+  } else if(clickInside(evt.touches[0].clientX, evt.touches[0].clientY, myPause.x, myPause.y, myPause.width, myPause.height)){
     paused = !paused;
   }
   //Trykket på exit

@@ -6,7 +6,7 @@ html, main {
 body {
   /* Hvis siden er for lang vil dette være bakgrunnsfargen isteden for hvit */
   background-color: #19191B;
-  background-image: url("img/bakgrunn/helvete.png");
+  background-image: url("img/bakgrunn/vulkan.png");
   background-repeat: no-repeat;
   background-size: cover;
   height: 100%;
@@ -38,6 +38,7 @@ body {
     width: 30%;
   }
 }
+
 .plattformKnapp {
   background-image: url("img/meny/plattformMeny.png");
   background-repeat: no-repeat;
