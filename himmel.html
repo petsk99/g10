@@ -100,7 +100,7 @@ function startGame() {
 
     funfact = "Visste du at:\n" + deadFacts[Math.floor(Math.random()*deadFacts.length)];
     //Bakgrunnen som endrer farge
-    gradientBackground = new component(window.innerWidth, 31000, "img/bakgrunn/background.png", 0, -31000+window.innerHeight, "image");
+    gradientBackground = new component(window.innerWidth, 30000, "img/bakgrunn/background.png", 0, -20000+window.innerHeight, "image");
     //For å se bedre ut på små skjermer, ser vi størrelsen på skjermen er stor blir vulkan bakgrunnen annerledes
     if(window.innerWidth > 750){
       vulcano = new component(window.innerWidth, window.innerHeight, "img/bakgrunn/vulkan.png", 0, 0, "image");
@@ -134,14 +134,14 @@ function startGame() {
 
     //Laster teksten som kan bli vist
     myScore = new component("23px", "PressStart2P", "white", 20, 40, "text");
+    myScore.score = 10000;
     pauseMenu = new component("30px", "PressStart2P", "white", window.innerWidth/2, window.innerHeight/2, "text");
     deadMenu = new component("18px", "PressStart2P", "white", window.innerWidth/2, window.innerHeight/2, "text", 1);
 
     jumpSound = new sound("sounds/jump.wav", 0.4);
     backgroundMusic = new sound("sounds/background.mp3", 1);
-    //Ettersom at bakken har posisjon nederst til venstre starter og for å regne hvor neste plattform kommer bruker forrige plattform vil de først plattformene alltid være til venstre på siden
-    //Dette gir den første plattformen en tilfeldig x posisjon
-    myObstacles.push(new component(platformWidth, 40, "img/plattform/lava.gif", Math.floor(Math.random() * window.innerWidth), window.innerHeight - Math.floor(Math.random() * 50) - 40, "image"));
+
+    myObstacles.push(new component(platformWidth, 40, "img/plattform/block.gif", Math.floor(Math.random() * window.innerWidth), window.innerHeight - Math.floor(Math.random() * 50) - 40, "image"));
     //Starter med nok plattformer
     var startPlatforms = Math.floor(Math.random()*4+3);
     var pleased = false;
@@ -152,7 +152,11 @@ function startGame() {
         if(usingSmallDevice){
           platformWidth = 75;
         }
-        myObstacles.push(new component(platformWidth, 20, "img/plattform/lava.gif", bPos[0], bPos[1], "image"));
+        var mov = 0;
+        if(Math.floor(Math.random() * 5) == 2){
+          mov = 1;
+        }
+        myObstacles.push(new component(platformWidth, 20, "img/plattform/block.gif", bPos[0], bPos[1], "image", 0, mov));
       }
       //Denne passer på at hele skjermen blir fylt med plattformer
       if(myObstacles[myObstacles.length-1].y > 150){
@@ -500,7 +504,7 @@ function updateGameArea() {
       spaceBackground.update();
     } else {
       gradientBackground.update();
-      vulcano.update();
+      //vulcano.update();
     }
     if(myScore.score > 10000 && myScore.score < 25000){
       for (i = 0; i < clouds.length; i += 1) {
